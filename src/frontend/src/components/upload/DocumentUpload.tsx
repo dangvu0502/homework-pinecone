@@ -11,7 +11,7 @@ interface DocumentUploadProps {
   documents?: UploadedDocument[];
 }
 
-export const DocumentUpload: React.FC<DocumentUploadProps> = ({ 
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ 
   onDocumentUploaded, 
   onDocumentRemoved,
   documents: externalDocuments 
@@ -124,3 +124,5 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     </div>
   );
 };
+
+export default DocumentUpload;
