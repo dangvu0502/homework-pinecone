@@ -78,8 +78,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const hasDocuments = contextDocuments.length > 0;
   
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800">
-      <div className="border-b border-gray-200 dark:border-gray-700 p-4">
+    <div className="h-full flex flex-col">
+      <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -134,7 +134,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         )}
       </div>
       
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="p-4">
         <div className="flex space-x-3">
           <textarea
             value={input}

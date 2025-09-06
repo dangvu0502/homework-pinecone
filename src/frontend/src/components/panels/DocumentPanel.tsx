@@ -1,11 +1,11 @@
+import { AlertCircle, CheckCircle, File, Loader2 } from 'lucide-react';
 import React from 'react';
-import { Upload, File, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import type { Document } from '../../stores/useDocumentStore';
 import { useLayoutStore } from '../../stores/useLayoutStore';
-import type { DocumentItem } from '../../stores/useDocumentStore';
 import DocumentUpload from '../upload/DocumentUpload';
 
 interface DocumentPanelProps {
-  documents: DocumentItem[];
+  documents: Document[];
   selectedIds: string[];
   processingStatus: Record<string, 'processing' | 'ready' | 'error'>;
 }
@@ -15,9 +15,8 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
   processingStatus,
 }) => {
   const { selectedDocument, selectDocument } = useLayoutStore();
-  const [showUpload, setShowUpload] = React.useState(!documents.length);
   
-  const getStatusIcon = (doc: DocumentItem) => {
+  const getStatusIcon = (doc: Document) => {
     const status = processingStatus[doc.id] || doc.status;
     
     switch (status) {
@@ -39,41 +38,23 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
   };
   
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800">
+    <div className="h-full flex flex-col">
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             DOCUMENTS ({documents.length})
           </h2>
-          <button
-            onClick={() => setShowUpload(!showUpload)}
-            className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 
-                     hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Toggle upload"
-          >
-            <Upload className="w-5 h-5" />
-          </button>
-        </div>
-        
-        {selectedDocument && (
-          <div className="text-sm text-blue-600 dark:text-blue-400">
-            1 document selected
-          </div>
-        )}
-      </div>
-      
-      {showUpload && (
-        <div className="p-4 pt-0">
           <DocumentUpload />
         </div>
-      )}
+        
+      </div>
       
       <div className="flex-1 overflow-y-auto">
         {documents.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
             <File className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p className="text-sm">No documents uploaded yet</p>
-            <p className="text-xs mt-1">Click the upload button to add files</p>
+            <p className="text-xs mt-1">Click the + button to add files</p>
           </div>
         ) : (
           <div className="space-y-1 px-2">
@@ -130,13 +111,6 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
         )}
       </div>
       
-      {selectedDocument && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20">
-          <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
-            Document selected for chat context
-          </p>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Monitor, Settings, User } from 'lucide-react';
+import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 
 const Header: React.FC = () => {
@@ -31,13 +31,18 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header className="bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          RAG Document Analysis
-        </h1>
-        
         <div className="flex items-center gap-3">
+          <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
+            <span className="text-white text-sm">📊</span>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            RAG Document Analysis
+          </h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
           {/* Theme Switcher */}
           <button
             onClick={() => setTheme(getNextTheme())}
@@ -53,21 +58,6 @@ const Header: React.FC = () => {
             </span>
           </button>
 
-          {/* Settings */}
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Settings"
-          >
-            <Settings className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-          </button>
-
-          {/* User */}
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="User menu"
-          >
-            <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-          </button>
         </div>
       </div>
     </header>
