@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
-import { app } from './app.js';
-import { testConnection, runMigrations } from './config/database.js';
-import { logger } from './utils/logger.js';
+import { app } from './app';
+import { testConnection, runMigrations } from './config/database';
+import { logger } from './utils/logger';
 
 // Load environment variables
 dotenv.config();

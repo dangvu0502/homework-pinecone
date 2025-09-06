@@ -1,11 +1,10 @@
 import express from 'express';
+import fs from 'fs/promises';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs/promises';
-import { db } from '../config/database.js';
-import { logger } from '../utils/logger.js';
-import { DocumentProcessor } from '../services/DocumentProcessor.js';
-import type { DBDocument } from '../types/index.js';
+import { db } from '../config/database';
+import { DocumentProcessor } from '../services/DocumentProcessor';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 

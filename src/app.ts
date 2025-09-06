@@ -2,10 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { errorHandler } from './middleware/error.js';
-import { logger } from './utils/logger.js';
-import documentRoutes from './routes/documents.js';
-import chatRoutes from './routes/chat.js';
+import { errorHandler } from './middleware/error';
+import { logger } from './utils/logger';
+import documentRoutes from './routes/documents';
+import chatRoutes from './routes/chat';
 
 const app = express();
 

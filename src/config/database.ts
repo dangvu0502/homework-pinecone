@@ -1,6 +1,6 @@
 import knex from 'knex';
-import { logger } from '../utils/logger.js';
-import config from '../knexfile.js';
+import { logger } from '../utils/logger';
+import config from '../knexfile';
 
 const environment = process.env.NODE_ENV || 'development';
 const knexConfig = config[environment];
