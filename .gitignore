@@ -1,0 +1,17 @@
+.claude
+.bmad-core/
+node_modules/
+
+
+# Virtual environments
+.venv
+
+# secrets
+.env
+secrets/
+
+# data
+data/
+
+docs/
+screenshots/

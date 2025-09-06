@@ -1,0 +1,26 @@
+{
+  "name": "rag-challenge",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev:server": "node --watch src/server.ts",
+    "dev:frontend": "cd src/frontend && npm run dev",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.6",
+    "eslint": "^9.30.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.35.1"
+  }
+}
