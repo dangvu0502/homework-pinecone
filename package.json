@@ -42,11 +42,7 @@
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-<<<<<<< HEAD
     "@types/node": "^22.18.1",
-=======
-    "@types/node": "^22.10.6",
->>>>>>> 29dae89 (BE002: Update server configuration and enhance chat/document routes with database integration)
     "@types/pdf-parse": "^1.1.5",
     "@types/supertest": "^6.0.3",
     "eslint": "^9.30.1",

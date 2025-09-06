@@ -2,17 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-<<<<<<< HEAD
 import { errorHandler } from './middleware/error';
 import { logger } from './utils/logger';
 import documentRoutes from './routes/documents';
 import chatRoutes from './routes/chat';
-=======
-import { errorHandler } from './middleware/error.js';
-import { logger } from './utils/logger.js';
-import documentRoutes from './routes/documents.js';
-import chatRoutes from './routes/chat.js';
->>>>>>> 29dae89 (BE002: Update server configuration and enhance chat/document routes with database integration)
 
 const app = express();
 
