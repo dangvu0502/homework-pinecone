@@ -1,11 +1,32 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useFileUpload } from '../../hooks/useFileUpload';
 import { FileList } from './FileList';
 import { ErrorAlert } from './ErrorAlert';
+import type { UploadedDocument } from '../../types';
 
-export const DocumentUpload: React.FC = () => {
-  const { documents, isUploading, globalErrors, uploadFiles, removeDocument, clearErrors } = useFileUpload();
+interface DocumentUploadProps {
+  onDocumentUploaded?: (document: UploadedDocument) => void;
+  onDocumentRemoved?: (documentId: string) => void;
+  documents?: UploadedDocument[];
+}
+
+export const DocumentUpload: React.FC<DocumentUploadProps> = ({ 
+  onDocumentUploaded, 
+  onDocumentRemoved,
+  documents: externalDocuments 
+}) => {
+  const { documents: internalDocuments, isUploading, globalErrors, uploadFiles, removeDocument, clearErrors } = useFileUpload();
+  
+  const documents = externalDocuments || internalDocuments;
+
+  useEffect(() => {
+    if (onDocumentUploaded) {
+      internalDocuments.forEach(doc => {
+        onDocumentUploaded(doc);
+      });
+    }
+  }, [internalDocuments, onDocumentUploaded]);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -29,7 +50,7 @@ export const DocumentUpload: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -91,7 +112,12 @@ export const DocumentUpload: React.FC = () => {
 
         {documents.length > 0 && (
           <div className="mt-8">
-            <FileList documents={documents} onRemove={removeDocument} />
+            <FileList documents={documents} onRemove={(id) => {
+              removeDocument(id);
+              if (onDocumentRemoved) {
+                onDocumentRemoved(id);
+              }
+            }} />
           </div>
         )}
       </div>

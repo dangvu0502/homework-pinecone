@@ -53,7 +53,7 @@ export const useFileUpload = () => {
       const xhr = new XMLHttpRequest();
 
       // Track upload progress
-      xhr.upload.onprogress = (event: ProgressEvent<XMLHttpRequestEventTarget>) => {
+      xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100);
           setDocuments(prev =>
