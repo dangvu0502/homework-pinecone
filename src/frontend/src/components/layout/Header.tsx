@@ -1,6 +1,8 @@
 import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Header: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -31,33 +33,35 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900">
+    <header className="bg-background border-b">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
-            <span className="text-white text-sm">📊</span>
+          <div className="w-6 h-6 bg-muted rounded flex items-center justify-center">
+            <span className="text-foreground text-sm">📊</span>
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-xl font-semibold text-foreground">
             RAG Document Analysis
           </h1>
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Theme Switcher */}
-          <button
-            onClick={() => setTheme(getNextTheme())}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group relative"
-            aria-label={`Switch to ${getThemeLabel(getNextTheme())} theme`}
-          >
-            <span className="text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100">
-              {getThemeIcon()}
-            </span>
-            {/* Tooltip */}
-            <span className="absolute -bottom-8 right-0 text-xs bg-gray-900 dark:bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-              {getThemeLabel(theme)}
-            </span>
-          </button>
-
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(getNextTheme())}
+                  aria-label={`Switch to ${getThemeLabel(getNextTheme())} theme`}
+                >
+                  {getThemeIcon()}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getThemeLabel(theme)} theme</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </header>

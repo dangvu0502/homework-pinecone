@@ -3,6 +3,9 @@ import { useLayoutStore } from "../../stores/useLayoutStore";
 import { useDocumentStore } from "../../stores/useDocumentStore";
 import { useChatStore } from "../../stores/useChatStore";
 import { useIntegratedState } from "../../hooks/useIntegratedState";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { FileText, BarChart } from "lucide-react";
 import DocumentPanel from "../panels/DocumentPanel";
 import ChatPanel from "../panels/ChatPanel";
 import DocumentInsights from "../panels/DocumentInsights";
@@ -15,13 +18,13 @@ const ThreePanelLayout: React.FC = () => {
   const {
     selectedDocument,
     panelVisibility,
-    activePanel,
     setMobileView,
-    setActivePanel,
   } = useLayoutStore();
 
   const { documents, processingStatus } = useDocumentStore();
   const { currentSession, messages } = useChatStore();
+  
+  const selectedDocumentObj = documents.find(doc => doc.id === selectedDocument);
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -43,65 +46,57 @@ const ThreePanelLayout: React.FC = () => {
 
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
   const isMobile = windowWidth < 768;
-
-  const renderMobileNavigation = () => (
-    <div className="flex justify-around bg-white dark:bg-gray-800">
-      <button
-        onClick={() => setActivePanel("documents")}
-        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-          activePanel === "documents"
-            ? "text-blue-600"
-            : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-        }`}
-      >
-        Documents ({documents.length})
-      </button>
-      <button
-        onClick={() => setActivePanel("chat")}
-        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-          activePanel === "chat"
-            ? "text-blue-600"
-            : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-        }`}
-      >
-        Chat
-      </button>
-      <button
-        onClick={() => setActivePanel("insights")}
-        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-          activePanel === "insights"
-            ? "text-blue-600"
-            : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-        }`}
-      >
-        Insights
-      </button>
-    </div>
-  );
-
+  
   if (isMobile) {
     return (
-      <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen flex flex-col bg-background">
         <Header />
-        {renderMobileNavigation()}
-        <div className="flex-1 overflow-hidden">
-          {activePanel === "documents" && (
-            <DocumentPanel
-              documents={documents}
-              selectedIds={selectedDocument ? [selectedDocument] : []}
-              processingStatus={processingStatus}
-            />
-          )}
-          {activePanel === "chat" && (
-            <ChatPanel
-              session={currentSession}
-              messages={messages}
-              contextDocuments={selectedDocument ? [selectedDocument] : []}
-            />
-          )}
-          {activePanel === "insights" && (
-            <DocumentInsights selectedDocument={selectedDocument} />
-          )}
+        <div className="flex-1 overflow-hidden relative">
+          <ChatPanel
+            session={currentSession}
+            messages={messages}
+            contextDocuments={documents.filter(doc => selectedDocument === doc.id).map(doc => doc.id)}
+            selectedDocumentName={selectedDocumentObj?.filename}
+          />
+          
+          {/* Mobile Navigation Sheets */}
+          <div className="absolute top-4 left-4 flex gap-2 z-10">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <FileText className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72">
+                <SheetHeader>
+                  <SheetTitle>Documents ({documents.length})</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 h-full overflow-hidden">
+                  <DocumentPanel
+                    documents={documents}
+                    selectedIds={selectedDocument ? [selectedDocument] : []}
+                    processingStatus={processingStatus}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <BarChart className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle>Document Insights</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 h-full overflow-hidden">
+                  <DocumentInsights selectedDocument={selectedDocument} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     );
@@ -111,7 +106,7 @@ const ThreePanelLayout: React.FC = () => {
     return (
       <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
         <Header />
-        <div className="flex-1 flex gap-2">
+        <div className="flex-1 flex gap-4">
           {panelVisibility.documents && (
             <div className="w-64 bg-gray-50 dark:bg-gray-800">
               <DocumentPanel
@@ -126,6 +121,7 @@ const ThreePanelLayout: React.FC = () => {
               session={currentSession}
               messages={messages}
               contextDocuments={selectedDocument ? [selectedDocument] : []}
+              selectedDocumentName={selectedDocumentObj?.filename}
             />
           </div>
         </div>
@@ -136,7 +132,7 @@ const ThreePanelLayout: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
       <Header />
-      <div className="flex-1 flex gap-2">
+      <div className="flex-1 flex gap-4">
         {panelVisibility.documents && (
           <div className="w-80 flex-shrink-0 bg-gray-50 dark:bg-gray-800">
             <DocumentPanel
@@ -152,6 +148,7 @@ const ThreePanelLayout: React.FC = () => {
             session={currentSession}
             messages={messages}
             contextDocuments={selectedDocument ? [selectedDocument] : []}
+            selectedDocumentName={selectedDocumentObj?.filename}
           />
         </div>
 

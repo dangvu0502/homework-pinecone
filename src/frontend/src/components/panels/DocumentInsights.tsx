@@ -1,5 +1,8 @@
 import React from 'react';
 import { TrendingUp, HelpCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface DocumentInsightsProps {
   selectedDocument?: string | null;
@@ -42,63 +45,86 @@ const DocumentInsights: React.FC<DocumentInsightsProps> = ({ selectedDocument })
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
-          Document Insights
-        </h2>
+      <div className="p-3 pt-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">
+            Document Insights
+          </h2>
+        </div>
 
         {/* Key Topics */}
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <Card>
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4" />
               Key Topics
-            </h3>
-          </div>
-          <div className="mt-3">
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
             {selectedDocument ? (
-              <ul className="space-y-2">
+              <div className="flex flex-wrap gap-2">
                 {mockInsights.keyTopics.map((topic, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="text-gray-400 dark:text-gray-500 mr-2">•</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{topic}</span>
-                  </li>
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {topic}
+                  </Badge>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              <div className="text-sm text-muted-foreground text-center py-4">
                 Document topics will appear here
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
+        {/* Key Numbers */}
+        {selectedDocument && (
+          <Card>
+            <CardHeader className="py-2 px-3">
+              <CardTitle className="text-sm">Key Numbers</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(mockInsights.keyNumbers).map(([key, value]) => (
+                  <div key={key} className="space-y-1">
+                    <div className="text-xs text-muted-foreground">{key}</div>
+                    <div className="text-sm font-medium">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Suggested Questions */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="flex items-center gap-2 mb-3">
-            <HelpCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <Card>
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <HelpCircle className="h-4 w-4" />
               Try Asking
-            </h3>
-          </div>
-          <div className="mt-3">
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
             {selectedDocument ? (
-              <ul className="space-y-3">
+              <div className="space-y-1">
                 {mockInsights.suggestedQuestions.map((question, index) => (
-                  <li key={index} className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="text-gray-400 dark:text-gray-500 mr-2">•</span>
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-2 text-left justify-start whitespace-normal text-xs w-full"
+                  >
                     {question}
-                  </li>
+                  </Button>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              <div className="text-sm text-muted-foreground text-center py-4">
                 Question suggestions will appear here
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

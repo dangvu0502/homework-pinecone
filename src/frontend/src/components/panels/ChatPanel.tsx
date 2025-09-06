@@ -1,111 +1,175 @@
-import React, { useEffect, useRef } from 'react';
-import { Send, RotateCw, FileText, MessageSquare } from 'lucide-react';
-import { useChatStore } from '../../stores/useChatStore';
-import type { ChatSession, Message } from '../../stores/useChatStore';
-import { useLayoutStore } from '../../stores/useLayoutStore';
-import { MessageBubble } from '../chat/MessageBubble';
-import { StreamingMessage } from '../chat/StreamingMessage';
+import React, { useEffect, useRef, useCallback } from "react";
+import { Send, RotateCw, FileText, MessageSquare } from "lucide-react";
+import { useChatStore } from "../../stores/useChatStore";
+import type { ChatSession } from "../../stores/useChatStore";
+import type { Message } from "../../types";
+import { useLayoutStore } from "../../stores/useLayoutStore";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { MessageBubble } from "../chat/MessageBubble";
+import { StreamingMessage } from "../chat/StreamingMessage";
 
 interface ChatPanelProps {
   session: ChatSession | null;
   messages: Message[];
   contextDocuments: string[];
+  selectedDocumentName?: string;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
   session,
   messages,
   contextDocuments,
+  selectedDocumentName,
 }) => {
-  const [input, setInput] = React.useState('');
+  const [input, setInput] = React.useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { selectedDocument } = useLayoutStore();
-  const { 
-    addMessage, 
-    isStreaming, 
-    streamingMessage, 
+  const {
+    addMessage,
+    isStreaming,
+    streamingMessage,
     clearMessages,
-    createSession 
+    createSession,
   } = useChatStore();
-  
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  
+
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // If empty, set to minimum height
+    if (textarea.value.trim() === "") {
+      textarea.style.height = "42px";
+      return;
+    }
+
+    // First check if it's a single line (no line breaks)
+    const hasLineBreaks = textarea.value.includes("\n");
+    if (!hasLineBreaks) {
+      // For single line without breaks, first check if it fits at minimum height
+      textarea.style.height = "42px";
+
+      // If content overflows at 42px height, it needs to expand
+      if (textarea.scrollHeight > 42) {
+        textarea.style.height = "auto";
+        const newHeight = Math.min(textarea.scrollHeight, 120);
+        textarea.style.height = `${newHeight}px`;
+      }
+      return;
+    }
+
+    // For multi-line content (has line breaks), calculate proper height
+    textarea.style.height = "auto";
+    const newHeight = Math.min(textarea.scrollHeight, 120);
+    textarea.style.height = `${newHeight}px`;
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage]);
-  
+
+  // Adjust height whenever input changes
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
+
+  // Set initial height on mount
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "42px";
+    }
+  }, []);
+
   const handleSendMessage = async () => {
     if (!input.trim() || isStreaming) return;
-    
+
     const messageContent = input.trim();
-    setInput('');
-    
+    setInput("");
+
     if (!session && selectedDocument) {
-      createSession('New Chat Session', [selectedDocument]);
+      createSession("New Chat Session", [selectedDocument]);
     }
-    
+
     addMessage({
-      role: 'user',
+      role: "user",
       content: messageContent,
     });
-    
+
     // TODO: Implement actual streaming API call
     // For now, simulate a response
     setTimeout(() => {
       addMessage({
-        role: 'assistant',
-        content: 'This is a simulated response. The actual streaming implementation will connect to the backend API.',
-        sources: selectedDocument ? [
-          {
-            documentId: selectedDocument,
-            documentName: 'Document 1',
-            snippet: 'Relevant excerpt from the document...',
-          }
-        ] : undefined,
+        role: "assistant",
+        content:
+          "This is a simulated response. The actual streaming implementation will connect to the backend API.",
+        sources: selectedDocument
+          ? [
+              {
+                documentId: selectedDocument,
+                documentName: "Document 1",
+                snippet: "Relevant excerpt from the document...",
+              },
+            ]
+          : undefined,
       });
     }, 1000);
   };
-  
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-  
+
   const hasDocuments = contextDocuments.length > 0;
-  
+
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4">
+      <div className="p-6 pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              CHAT ASSISTANT
-            </h2>
-            {contextDocuments.length > 0 && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                <FileText className="w-3 h-3 mr-1" />
-                1 document
-              </span>
-            )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-semibold">Chat Assistant</h2>
+                <div className="h-5 flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+                  <FileText
+                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      !selectedDocumentName ? "opacity-60" : ""
+                    }`}
+                  />
+                  {selectedDocumentName ? (
+                    <span className="truncate" title={selectedDocumentName}>
+                      {selectedDocumentName}
+                    </span>
+                  ) : (
+                    <span className="opacity-60">
+                      select a document to start
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
           <button
             onClick={clearMessages}
             disabled={messages.length === 0}
             className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 
                      hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 
-                     disabled:cursor-not-allowed"
+                     disabled:cursor-not-allowed flex-shrink-0"
             title="Clear chat"
           >
             <RotateCw className="w-5 h-5" />
           </button>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 && !streamingMessage ? (
           <div className="h-full flex items-center justify-center">
@@ -116,8 +180,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {hasDocuments
-                  ? 'Ask questions about your selected document'
-                  : 'Select a document from the left panel to provide context for your questions'}
+                  ? "Ask questions about your selected document"
+                  : "Select a document from the left panel to provide context for your questions"}
               </p>
             </div>
           </div>
@@ -127,44 +191,42 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               <MessageBubble key={message.id} message={message} />
             ))}
             {streamingMessage && (
-              <StreamingMessage content={streamingMessage} />
+              <StreamingMessage
+                content={streamingMessage}
+                isStreaming={isStreaming}
+              />
             )}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
-      
-      <div className="p-4">
-        <div className="flex space-x-3">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type message..."
-            disabled={!hasDocuments || isStreaming}
-            className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 
-                     bg-white dark:bg-gray-700 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 
-                     placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 
-                     focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 
-                     dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-            rows={2}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!input.trim() || !hasDocuments || isStreaming}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
-                     disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed 
-                     transition-colors"
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-        {!hasDocuments && (
-          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-            Select a document from the left panel to enable chat
-          </p>
-        )}
+
+      <div className="flex items-end gap-3 p-6 pt-4">
+        <Textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder="Type a message..."
+          disabled={!hasDocuments || isStreaming}
+          className="flex-1 resize-none max-h-[120px]
+             rounded-lg py-2.5 px-3 text-sm leading-5 overflow-y-auto 
+             transition-[height] duration-100 ease-in-out border
+            border-gray-200 shadow bg-background
+            "
+        />
+        <Button
+          onClick={handleSendMessage}
+          disabled={!input.trim() || !hasDocuments || isStreaming}
+          size="icon"
+          className="h-[42px] w-[42px] rounded-lg flex-shrink-0"
+        >
+          {isStreaming ? (
+            <RotateCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+        </Button>
       </div>
     </div>
   );
