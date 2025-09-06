@@ -1,0 +1,5 @@
+LlamaIndex, Langchainjs, OpenAI, Embedding, VectorDB( pipecone,...), Data Upload + Extraction, Structure Data
+Ví dụ nhé: Tạo một website cho phép user upload documents( dạng png, jpeg, svg, pdf, csv, txt,...), 
+xong rồi extract và lưu các data này -> xử lý embedding + index data với pipecone. 
+Trên UI cho phép chọn document đã upload để tương tác, ví dụ: xem data extraction, 
+tìm kiếm data đã được extraction, hỏi đáp về data đã upload lên
