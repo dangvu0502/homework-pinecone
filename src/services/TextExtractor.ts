@@ -1,5 +1,10 @@
 import fs from 'fs/promises';
+<<<<<<< HEAD
 import { logger } from '../utils/logger';
+=======
+import path from 'path';
+import { logger } from '../utils/logger.js';
+>>>>>>> 29dae89 (BE002: Update server configuration and enhance chat/document routes with database integration)
 
 // Simplified text extraction for MVP
 export class TextExtractor {

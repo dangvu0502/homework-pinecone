@@ -1,7 +1,13 @@
 import dotenv from 'dotenv';
+<<<<<<< HEAD
 import { app } from './app';
 import { testConnection, runMigrations } from './config/database';
 import { logger } from './utils/logger';
+=======
+import { app } from './app.js';
+import { testConnection, runMigrations } from './config/database.js';
+import { logger } from './utils/logger.js';
+>>>>>>> 29dae89 (BE002: Update server configuration and enhance chat/document routes with database integration)
 
 // Load environment variables
 dotenv.config();

@@ -1,5 +1,9 @@
 import OpenAI from 'openai';
+<<<<<<< HEAD
 import { logger } from '../utils/logger';
+=======
+import { logger } from '../utils/logger.js';
+>>>>>>> 29dae89 (BE002: Update server configuration and enhance chat/document routes with database integration)
 
 export class EmbeddingService {
   private openai: OpenAI;
