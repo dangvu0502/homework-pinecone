@@ -3,24 +3,36 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev:server": "node --watch src/server.ts",
+    "dev": "nodemon --exec tsx src/index.ts",
+    "dev:server": "nodemon --exec tsx src/index.ts",
     "dev:frontend": "cd src/frontend && npm run dev",
     "build": "tsc",
+    "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "echo 'No tests yet'"
   },
   "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "@pinecone-database/pinecone": "^6.1.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "langchain": "^0.3.33",
+    "multer": "^2.0.2",
+    "openai": "^5.19.1",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.10.6",
     "eslint": "^9.30.1",
-    "typescript": "^5.7.3",
+    "nodemon": "^3.1.10",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
     "typescript-eslint": "^8.35.1"
   }
 }
