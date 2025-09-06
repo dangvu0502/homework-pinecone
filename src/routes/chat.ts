@@ -2,6 +2,8 @@ import express from 'express';
 import { db } from '../config/database.js';
 import { logger } from '../utils/logger.js';
 import { ChatService } from '../services/ChatService.js';
+import ChatSessionModel from '../models/ChatSession.js';
+import ChatMessageModel from '../models/ChatMessage.js';
 
 const router = express.Router();
 const chatService = new ChatService();
@@ -11,9 +13,9 @@ router.post('/sessions', async (req, res) => {
   try {
     const { documentIds = [] } = req.body;
 
-    const [session] = await db('chat_sessions')
-      .insert({ document_ids: JSON.stringify(documentIds) })
-      .returning(['id', 'created_at', 'document_ids']);
+    const session = await ChatSessionModel.create({
+      document_ids: documentIds
+    });
 
     logger.info('Chat session created', {
       sessionId: session.id,
@@ -23,7 +25,7 @@ router.post('/sessions', async (req, res) => {
     return res.status(201).json({
       id: session.id,
       createdAt: session.created_at,
-      documentIds: session.document_ids || []
+      documentIds: session.document_ids
     });
 
   } catch (error: any) {
@@ -43,10 +45,7 @@ router.get('/sessions/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const session = await db('chat_sessions')
-      .select(['id', 'created_at', 'document_ids'])
-      .where({ id })
-      .first();
+    const session = await ChatSessionModel.findById(id);
 
     if (!session) {
       return res.status(404).json({
@@ -60,7 +59,7 @@ router.get('/sessions/:id', async (req, res) => {
     return res.json({
       id: session.id,
       createdAt: session.created_at,
-      documentIds: session.document_ids || []
+      documentIds: session.document_ids
     });
 
   } catch (error: any) {
@@ -94,10 +93,7 @@ router.post('/sessions/:id/messages', async (req, res) => {
     }
 
     // Verify session exists and get document IDs
-    const session = await db('chat_sessions')
-      .select(['id', 'document_ids'])
-      .where({ id: sessionId })
-      .first();
+    const session = await ChatSessionModel.findById(sessionId);
 
     if (!session) {
       return res.status(404).json({
@@ -110,13 +106,11 @@ router.post('/sessions/:id/messages', async (req, res) => {
     const documentIds = session.document_ids || [];
 
     // Save user message
-    const [userMessage] = await db('chat_messages')
-      .insert({
-        session_id: sessionId,
-        role: 'user',
-        content: message
-      })
-      .returning(['id', 'created_at']);
+    const userMessage = await ChatMessageModel.create({
+      session_id: parseInt(sessionId),
+      role: 'user',
+      content: message
+    });
 
     logger.info('User message saved', {
       sessionId,
@@ -142,7 +136,7 @@ router.post('/sessions/:id/messages', async (req, res) => {
     try {
       // Generate streaming response
       const responseStream = useRag && documentIds.length > 0
-        ? chatService.generateStreamingResponse(message, documentIds)
+        ? chatService.generateStreamingResponse(message, documentIds.map(String))
         : chatService.generateSimpleResponse(message);
 
       for await (const chunk of responseStream) {
@@ -158,13 +152,12 @@ router.post('/sessions/:id/messages', async (req, res) => {
       }
 
       // Save assistant response to database
-      await db('chat_messages')
-        .insert({
-          session_id: sessionId,
-          role: 'assistant',
-          content: assistantResponse,
-          sources: JSON.stringify(sources)
-        });
+      await ChatMessageModel.create({
+        session_id: parseInt(sessionId),
+        role: 'assistant',
+        content: assistantResponse,
+        sources
+      });
 
       // Send final close message
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
@@ -214,20 +207,15 @@ router.post('/sessions/:id/messages', async (req, res) => {
 router.get('/sessions/:id/messages', async (req, res) => {
   try {
     const { id: sessionId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 50;
 
-    const messages = await db('chat_messages')
-      .select(['id', 'role', 'content', 'sources', 'created_at'])
-      .where({ session_id: sessionId })
-      .orderBy('created_at', 'asc')
-      .limit(limit);
+    const messages = await ChatMessageModel.findBySessionId(sessionId);
 
-    const formattedMessages = messages.map(row => ({
-      id: row.id,
-      role: row.role,
-      content: row.content,
-      sources: row.sources || [],
-      createdAt: row.created_at
+    const formattedMessages = messages.map(msg => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      sources: msg.sources,
+      createdAt: msg.created_at
     }));
 
     return res.json({
