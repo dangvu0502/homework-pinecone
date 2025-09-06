@@ -1,9 +1,10 @@
 
+import React from 'react';
+import { DocumentUpload } from './components/upload/DocumentUpload';
+
 function App() {
   return (
-    <div>
-      <h1>Hello World</h1>
-    </div>
+    <DocumentUpload />
   )
 }
 
