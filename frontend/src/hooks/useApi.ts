@@ -28,7 +28,6 @@ export const useDocuments = () => {
   return useQuery({
     queryKey: ['documents'],
     queryFn: documentApi.list,
-    refetchInterval: 5000, // Poll every 5 seconds for status updates
   });
 };
 
@@ -56,6 +55,22 @@ export const useDocumentStatus = (documentId: number | null) => {
       }
       return false; // Stop polling when done
     },
+  });
+};
+
+export const useSearchDocument = () => {
+  return useMutation({
+    mutationFn: ({ documentId, query }: { documentId: number; query: string }) =>
+      documentApi.searchDocument(documentId, query),
+  });
+};
+
+export const useDocumentInsights = (documentId: number | null) => {
+  return useQuery({
+    queryKey: ['document-insights', documentId],
+    queryFn: () => documentId ? documentApi.getInsights(documentId) : null,
+    enabled: !!documentId,
+    retry: 1, // Only retry once to avoid excessive API calls
   });
 };
 

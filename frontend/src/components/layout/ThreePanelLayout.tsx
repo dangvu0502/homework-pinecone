@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { FileText, BarChart } from "lucide-react";
 import DocumentPanel from "../panels/DocumentPanel";
 import ChatPanel from "../panels/ChatPanel";
-import DocumentInsights from "../panels/DocumentInsights";
+import QuickSearch from "../panels/DocumentInsights";
 import Header from "./Header";
 
 const ThreePanelLayout: React.FC = () => {
@@ -44,91 +44,77 @@ const ThreePanelLayout: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [setMobileView]);
 
-  const isTablet = windowWidth >= 768 && windowWidth < 1024;
-  const isMobile = windowWidth < 768;
+  const isMobileOrTablet = windowWidth < 1024;
   
-  if (isMobile) {
+  if (isMobileOrTablet) {
     return (
       <div className="h-screen flex flex-col bg-background">
         <Header />
-        <div className="flex-1 overflow-hidden relative">
+        
+        {/* Mobile Navigation Bar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="text-sm">Documents ({documents.length})</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[90vw] sm:w-[85vw] max-w-sm p-0">
+              <SheetHeader className="p-4 pb-2 border-b">
+                <SheetTitle>Documents</SheetTitle>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto">
+                <DocumentPanel
+                  documents={documents}
+                  selectedIds={selectedDocument ? [selectedDocument] : []}
+                  processingStatus={processingStatus}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          {selectedDocumentObj && (
+            <div className="flex-1 text-center px-2">
+              <span className="text-sm text-muted-foreground truncate block">
+                {selectedDocumentObj.filename}
+              </span>
+            </div>
+          )}
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-2">
+                <BarChart className="h-4 w-4" />
+                <span className="text-sm">Insights</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[90vw] sm:w-[85vw] max-w-sm p-0">
+              <SheetHeader className="p-4 pb-2 border-b">
+                <SheetTitle>Quick Search</SheetTitle>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto">
+                <QuickSearch selectedDocument={selectedDocument} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+        
+        {/* Chat Panel - Full Height */}
+        <div className="flex-1 overflow-hidden">
           <ChatPanel
             messages={messages}
             contextDocuments={documents.filter(doc => selectedDocument === doc.id).map(doc => doc.id)}
             selectedDocumentName={selectedDocumentObj?.filename}
           />
-          
-          {/* Mobile Navigation Sheets */}
-          <div className="absolute top-4 left-4 flex gap-2 z-10">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <FileText className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72">
-                <SheetHeader>
-                  <SheetTitle>Documents ({documents.length})</SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 h-full overflow-hidden">
-                  <DocumentPanel
-                    documents={documents}
-                    selectedIds={selectedDocument ? [selectedDocument] : []}
-                    processingStatus={processingStatus}
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
-            
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <BarChart className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <SheetHeader>
-                  <SheetTitle>Document Insights</SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 h-full overflow-hidden">
-                  <DocumentInsights selectedDocument={selectedDocument} />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
         </div>
       </div>
     );
   }
 
-  if (isTablet) {
-    return (
-      <div className="h-screen flex flex-col bg-background">
-        <Header />
-        <div className="flex-1 flex overflow-hidden">
-          {panelVisibility.documents && (
-            <div className="w-64 border-r border-border bg-card overflow-y-auto">
-              <DocumentPanel
-                documents={documents}
-                selectedIds={selectedDocument ? [selectedDocument] : []}
-                processingStatus={processingStatus}
-              />
-            </div>
-          )}
-          <div className="flex-1 bg-background">
-            <ChatPanel
-              messages={messages}
-              contextDocuments={selectedDocument ? [selectedDocument] : []}
-              selectedDocumentName={selectedDocumentObj?.filename}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         {panelVisibility.documents && (
@@ -141,7 +127,7 @@ const ThreePanelLayout: React.FC = () => {
           </div>
         )}
 
-        <div className="flex-1 min-w-0 flex flex-col bg-background">
+        <div className="flex-1 min-w-0 flex flex-col bg-background overflow-hidden">
           <ChatPanel
             messages={messages}
             contextDocuments={selectedDocument ? [selectedDocument] : []}
@@ -150,8 +136,8 @@ const ThreePanelLayout: React.FC = () => {
         </div>
 
         {panelVisibility.insights && (
-          <div className="w-80 flex-shrink-0 border-l border-border bg-card overflow-y-auto">
-            <DocumentInsights selectedDocument={selectedDocument} />
+          <div className="w-96 xl:w-[28rem] flex-shrink-0 border-l border-border bg-card overflow-y-auto">
+            <QuickSearch selectedDocument={selectedDocument} />
           </div>
         )}
       </div>

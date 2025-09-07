@@ -1,4 +1,4 @@
-import { db } from '../config/database.ts';
+import { db } from '../database.ts';
 
 export interface Document {
   id: number;
@@ -8,6 +8,11 @@ export interface Document {
   file_path: string;
   status: string;
   uploaded_at: Date;
+  extracted_text?: string | null;
+  embedding_id?: string | null;
+  processed_at?: Date | null;
+  error_message?: string | null;
+  chunk_count?: number | null;
 }
 
 export interface CreateDocumentDto {

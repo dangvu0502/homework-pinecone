@@ -1,4 +1,4 @@
-import { db } from '../config/database.ts';
+import { db } from '../database.ts';
 
 export interface ChatSession {
   id: number;

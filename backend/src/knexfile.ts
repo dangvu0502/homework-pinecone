@@ -6,7 +6,7 @@ const config: { [key: string]: Knex.Config } = {
   development: {
     client: "sqlite3",
     connection: {
-      filename: "./database.sqlite3"
+      filename: "/Users/matt/Learn/fun_stuff/rag-challenge/backend/database.sqlite3"
     },
     useNullAsDefault: true,
     migrations: {

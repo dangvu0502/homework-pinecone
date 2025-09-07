@@ -1,5 +1,5 @@
 import { app } from './app.ts';
-import { testConnection } from './config/database.ts';
+import { testConnection } from './database.ts';
 import { logger } from './utils/logger.ts';
 
 const PORT = process.env.PORT || 3000;

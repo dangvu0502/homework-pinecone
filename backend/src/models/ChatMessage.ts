@@ -1,5 +1,12 @@
-import { db } from '../config/database.ts';
-import type { RetrievedChunk } from '../services/ChatService.ts';
+import { db } from '../database.ts';
+
+export interface RetrievedChunk {
+  documentId: string;
+  filename: string;
+  text: string;
+  relevanceScore: number;
+  chunkIndex?: number;
+}
 
 export interface ChatMessage {
   id: number;

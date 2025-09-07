@@ -1,11 +1,12 @@
 import express from 'express';
 import ChatMessageModel from '../models/ChatMessage.ts';
 import ChatSessionModel from '../models/ChatSession.ts';
-import { ChatService, type RetrievedChunk } from '../services/ChatService.ts';
+import { pineconeDB, type SearchResult } from '../services/PineconeService.ts';
+import { OpenAIService } from '../services/OpenAI.ts';
 import { logger } from '../utils/logger.ts';
 
 const router = express.Router();
-const chatService = new ChatService();
+const openAI = new OpenAIService();
 
 // POST /api/chat/sessions - Create new chat session
 router.post('/sessions', async (req, res) => {
@@ -130,23 +131,50 @@ router.post('/sessions/:id/messages', async (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'connected', sessionId })}\n\n`);
 
     let assistantResponse = '';
-    let sources: RetrievedChunk[] = [];
+    let sources: SearchResult[] = [];
 
     try {
-      // Generate streaming response
-      const responseStream = useRag && documentIds.length > 0
-        ? chatService.generateStreamingResponse(message, documentIds.map(String))
-        : chatService.generateSimpleResponse(message);
-
-      for await (const chunk of responseStream) {
-        // Send chunk to client
-        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-
-        // Collect data for database storage
-        if (chunk.type === 'token' && chunk.content) {
-          assistantResponse += chunk.content;
-        } else if (chunk.type === 'source' && chunk.sources) {
-          sources = chunk.sources;
+      // Get context from Pinecone if using RAG
+      if (useRag && documentIds.length > 0) {
+        // Use text-based search with integrated inference
+        const searchResults = await pineconeDB.searchSimilarWithText(
+          message,
+          5,
+          { documentId: { $in: documentIds.map(String) } }
+        );
+        
+        sources = searchResults;
+        
+        // Send sources to client
+        res.write(`data: ${JSON.stringify({
+          type: 'source',
+          sources: searchResults.map(result => ({
+            documentId: result.documentId,
+            filename: result.filename,
+            snippet: result.text.substring(0, 200) + '...',
+            relevanceScore: result.relevanceScore
+          }))
+        })}\n\n`);
+        
+        // Generate context for answer
+        const context = searchResults.map(r => r.text).join('\n\n');
+        
+        // Stream answer generation
+        for await (const token of openAI.streamAnswer(message, context)) {
+          assistantResponse += token;
+          res.write(`data: ${JSON.stringify({
+            type: 'token',
+            content: token
+          })}\n\n`);
+        }
+      } else {
+        // Simple response without RAG
+        for await (const token of openAI.streamAnswer(message, '')) {
+          assistantResponse += token;
+          res.write(`data: ${JSON.stringify({
+            type: 'token',
+            content: token
+          })}\n\n`);
         }
       }
 

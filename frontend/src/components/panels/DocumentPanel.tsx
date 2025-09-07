@@ -1,9 +1,21 @@
-import { AlertCircle, CheckCircle, File, Loader2 } from "lucide-react";
-import React from "react";
+import { AlertCircle, CheckCircle, File, Loader2, Trash2 } from "lucide-react";
+import React, { useState } from "react";
 import type { Document } from "../../stores/useDocumentStore";
+import { useDocumentStore } from "../../stores/useDocumentStore";
 import { useLayoutStore } from "../../stores/useLayoutStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +35,10 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
   processingStatus,
 }) => {
   const { selectedDocument, selectDocument } = useLayoutStore();
+  const { deleteDocument } = useDocumentStore();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getStatusIcon = (doc: Document) => {
     const status = processingStatus[doc.id] || doc.status;
@@ -79,6 +95,68 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    // Less than a minute
+    if (diff < 60 * 1000) {
+      return "just now";
+    }
+    
+    // Less than an hour
+    if (diff < 60 * 60 * 1000) {
+      const minutes = Math.floor(diff / (60 * 1000));
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    }
+    
+    // Less than a day
+    if (diff < 24 * 60 * 60 * 1000) {
+      const hours = Math.floor(diff / (60 * 60 * 1000));
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    }
+    
+    // Less than a week
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+      const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    }
+    
+    // Format as date
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, doc: Document) => {
+    e.stopPropagation();
+    setDocumentToDelete(doc);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!documentToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteDocument(documentToDelete.id);
+      
+      // If the deleted document was selected, clear the selection
+      if (selectedDocument === documentToDelete.id) {
+        selectDocument(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete document:', error);
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
+    }
   };
 
   return (
@@ -160,10 +238,19 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
                                 )}
                               </Tooltip>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                              onClick={(e) => handleDeleteClick(e, doc)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
                             {formatFileSize(doc.size)} •{" "}
-                            {doc.contentType.split("/").pop()}
+                            {doc.contentType.split("/").pop()} •{" "}
+                            {formatDate(doc.uploadedAt)}
                           </div>
 
                           {doc.errorMessage && (
@@ -181,6 +268,35 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
           )}
         </div>
       </div>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{documentToDelete?.filename}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 };

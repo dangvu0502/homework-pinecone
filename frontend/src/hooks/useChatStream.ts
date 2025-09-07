@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Message, StreamEvent, DocumentSource } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const useChatStream = (sessionId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);

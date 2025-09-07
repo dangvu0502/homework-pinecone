@@ -4,51 +4,125 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { CheckCircle, FileUp, Plus, Upload } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useFileUpload } from '../../hooks/useFileUpload';
-import type { UploadedDocument } from '../../types';
+import { useDocumentStore, type Document } from '../../stores/useDocumentStore';
 import { ErrorAlert } from './ErrorAlert';
 
 interface DocumentUploadProps {
-  onDocumentUploaded?: (document: UploadedDocument) => void;
+  onDocumentUploaded?: (document: Document) => void;
   onDocumentRemoved?: (documentId: string) => void;
-  documents?: UploadedDocument[];
+  documents?: Document[];
 }
 
 const DocumentUpload: React.FC<DocumentUploadProps> = ({ 
   onDocumentUploaded, 
 }) => {
-  const { documents: internalDocuments, isUploading, globalErrors, uploadFiles, clearErrors } = useFileUpload();
+  const { uploadDocument, isLoading: isUploading, error } = useDocumentStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [globalErrors, setGlobalErrors] = useState<string[]>([]);
   
 
-  useEffect(() => {
-    if (onDocumentUploaded) {
-      internalDocuments.forEach(doc => {
-        onDocumentUploaded(doc);
-      });
+  const validateFile = useCallback((file: File): string | null => {
+    const allowedTypes = [
+      'application/pdf',
+      'image/png',
+      'image/jpeg',
+      'image/svg+xml',
+      'text/csv',
+      'text/plain'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      return 'File type not supported. Please upload PDF, PNG, JPEG, SVG, CSV, or TXT files.';
     }
-  }, [internalDocuments, onDocumentUploaded]);
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      return 'File size must be less than 10MB.';
+    }
+
+    return null;
+  }, []);
+
+  const clearErrors = useCallback(() => {
+    setGlobalErrors([]);
+  }, []);
+
+  // Effect to handle store errors
+  useEffect(() => {
+    if (error) {
+      setGlobalErrors([error]);
+    }
+  }, [error]);
 
   const handleFileSelect = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files && files.length > 0) {
-        uploadFiles(Array.from(files));
-        setIsModalOpen(false);
+        const fileArray = Array.from(files);
+        const validFiles: File[] = [];
+        const errors: string[] = [];
+
+        // Validate all files first
+        fileArray.forEach(file => {
+          const error = validateFile(file);
+          if (error) {
+            errors.push(`${file.name}: ${error}`);
+          } else {
+            validFiles.push(file);
+          }
+        });
+
+        if (errors.length > 0) {
+          setGlobalErrors(errors);
+        }
+
+        // Upload valid files
+        if (validFiles.length > 0) {
+          try {
+            await Promise.all(validFiles.map(file => uploadDocument(file)));
+            setIsModalOpen(false);
+          } catch (err) {
+            setGlobalErrors([err instanceof Error ? err.message : 'Upload failed']);
+          }
+        }
+        
         // Reset the input value to allow selecting the same file again
         event.target.value = '';
       }
     },
-    [uploadFiles]
+    [uploadDocument, validateFile]
   );
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      uploadFiles(acceptedFiles);
-      setIsModalOpen(false);
+    async (acceptedFiles: File[]) => {
+      const validFiles: File[] = [];
+      const errors: string[] = [];
+
+      // Validate all files first
+      acceptedFiles.forEach(file => {
+        const error = validateFile(file);
+        if (error) {
+          errors.push(`${file.name}: ${error}`);
+        } else {
+          validFiles.push(file);
+        }
+      });
+
+      if (errors.length > 0) {
+        setGlobalErrors(errors);
+      }
+
+      // Upload valid files
+      if (validFiles.length > 0) {
+        try {
+          await Promise.all(validFiles.map(file => uploadDocument(file)));
+          setIsModalOpen(false);
+        } catch (err) {
+          setGlobalErrors([err instanceof Error ? err.message : 'Upload failed']);
+        }
+      }
     },
-    [uploadFiles]
+    [uploadDocument, validateFile]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

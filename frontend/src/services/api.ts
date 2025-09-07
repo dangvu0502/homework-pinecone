@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export class ApiError extends Error {
+
   constructor(public status: number, message: string) {
     super(message);
     this.name = 'ApiError';
@@ -55,6 +56,42 @@ export const documentApi = {
     filename: string;
   }> {
     const response = await fetch(`${API_BASE_URL}/documents/${id}/status`);
+    return handleResponse(response);
+  },
+
+  async searchDocument(documentId: number, query: string): Promise<{
+    query: string;
+    results: Array<{
+      documentId: string;
+      filename: string;
+      text: string;
+      relevanceScore: number;
+      chunkIndex: number;
+    }>;
+    resultCount: number;
+    message?: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    return handleResponse(response);
+  },
+
+  async getInsights(documentId: number): Promise<{
+    keyTopics: string[];
+    suggestedQuestions: string[];
+    summary?: string;
+    overview: {
+      type: string;
+      format: string;
+      size: string;
+      status: string;
+      lastModified?: string;
+    };
+  }> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/insights`);
     return handleResponse(response);
   }
 };

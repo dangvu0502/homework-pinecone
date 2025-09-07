@@ -83,6 +83,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   }, []);
 
+  // Clear chat when selected document changes
+  useEffect(() => {
+    clearMessages();
+    // Note: currentSession will be handled when user sends first message
+  }, [selectedDocument, clearMessages]);
+
   const handleSendMessage = async () => {
     if (!input.trim() || isStreaming) return;
 
@@ -109,7 +115,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 pb-4">
+      <div className="p-4 sm:p-6 sm:pb-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -148,7 +154,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4 py-2 sm:p-4">
         {messages.length === 0 && !streamingMessage ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center max-w-md">
@@ -179,7 +185,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         )}
       </div>
 
-      <div className="flex items-end gap-3 p-6 pt-4">
+      <div className="flex items-end gap-2 sm:gap-3 p-4 sm:p-6 sm:pt-4">
         <Textarea
           ref={textareaRef}
           value={input}

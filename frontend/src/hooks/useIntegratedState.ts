@@ -8,6 +8,11 @@ export const useIntegratedState = () => {
   const documents = useDocumentStore();
   const chat = useChatStore();
   
+  // Initialize documents when the hook mounts
+  useEffect(() => {
+    documents.fetchDocuments();
+  }, [documents.fetchDocuments]);
+  
   // Sync selected document with chat context
   useEffect(() => {
     if (layout.selectedDocument) {
