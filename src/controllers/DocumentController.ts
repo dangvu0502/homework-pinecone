@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import DocumentModel from '../models/Document.js';
-import fileStorageService from '../services/FileStorageService.js';
+import type { Request, Response, NextFunction } from 'express';
+import DocumentModel from '../models/Document.ts';
+import fileStorageService from '../services/FileStorageService.ts';
 
 export class DocumentController {
   async upload(req: Request, res: Response, next: NextFunction): Promise<void> {

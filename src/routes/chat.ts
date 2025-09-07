@@ -1,9 +1,8 @@
 import express from 'express';
-import { db } from '../config/database.js';
-import { logger } from '../utils/logger.js';
-import { ChatService } from '../services/ChatService.js';
-import ChatSessionModel from '../models/ChatSession.js';
-import ChatMessageModel from '../models/ChatMessage.js';
+import ChatMessageModel from '../models/ChatMessage.ts';
+import ChatSessionModel from '../models/ChatSession.ts';
+import { ChatService } from '../services/ChatService.ts';
+import { logger } from '../utils/logger.ts';
 
 const router = express.Router();
 const chatService = new ChatService();

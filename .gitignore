@@ -13,5 +13,6 @@ secrets/
 # data
 data/
 
+logs/
 docs/
 screenshots/

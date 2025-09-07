@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.ts';
 
 export class EmbeddingService {
   private openai: OpenAI;

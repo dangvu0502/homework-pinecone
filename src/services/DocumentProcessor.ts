@@ -1,10 +1,10 @@
 import path from 'path';
-import { db } from '../config/database.js';
-import { logger } from '../utils/logger.js';
-import { TextExtractor } from './TextExtractor.js';
-import { EmbeddingService } from './EmbeddingService.js';
-import { VectorStore, type PineconeVector } from './VectorStore.js';
-import type { DBDocument } from '../types/index.js';
+import { db } from '../config/database.ts';
+import { logger } from '../utils/logger.ts';
+import { TextExtractor } from './TextExtractor.ts';
+import { EmbeddingService } from './EmbeddingService.ts';
+import { VectorStore, type PineconeVector } from './VectorStore.ts';
+import type { DBDocument } from '../types/index.ts';
 
 export class DocumentProcessor {
   private textExtractor: TextExtractor;

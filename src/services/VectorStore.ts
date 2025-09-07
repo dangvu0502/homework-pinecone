@@ -1,5 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.ts';
 
 export interface VectorMetadata {
   documentId: string;

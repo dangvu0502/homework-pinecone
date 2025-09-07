@@ -1,6 +1,6 @@
 import knex from 'knex';
-import { logger } from '../utils/logger';
-import config from '../knexfile';
+import { logger } from '../utils/logger.ts';
+import config from '../knexfile.ts';
 
 const environment = process.env.NODE_ENV || 'development';
 const knexConfig = config[environment];
@@ -27,10 +27,33 @@ export const testConnection = async (): Promise<boolean> => {
   }
 };
 
+// Check if migrations are needed
+export const checkMigrations = async (): Promise<boolean> => {
+  try {
+    const [completed, pending] = await Promise.all([
+      db.migrate.list({ directory: db.client.config.migrations.directory }),
+      db.migrate.list({ directory: db.client.config.migrations.directory })
+    ]);
+    
+    return pending[1].length > 0;
+  } catch (error: any) {
+    logger.error('Failed to check migration status', { error: error.message });
+    return false;
+  }
+};
+
 // Run migrations
 export const runMigrations = async (): Promise<void> => {
   try {
-    logger.info('Running database migrations...');
+    // Check if there are pending migrations first
+    const [, pending] = await db.migrate.list();
+    
+    if (pending.length === 0) {
+      logger.info('Database is up to date, no migrations needed');
+      return;
+    }
+    
+    logger.info(`Running ${pending.length} pending migration(s)...`);
     await db.migrate.latest();
     logger.info('Database migrations completed successfully');
   } catch (error: any) {

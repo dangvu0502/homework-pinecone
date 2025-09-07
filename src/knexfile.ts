@@ -6,7 +6,12 @@ const config: { [key: string]: Knex.Config } = {
   development: {
     client: "sqlite3",
     connection: {
-      filename: "./dev.sqlite3"
+      filename: "./database.sqlite3"
+    },
+    useNullAsDefault: true,
+    migrations: {
+      directory: "./migrations",
+      extension: "ts"
     }
   },
 

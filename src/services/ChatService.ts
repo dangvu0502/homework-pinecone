@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
-import { EmbeddingService } from './EmbeddingService';
-import { VectorStore } from './VectorStore';
-import { logger } from '../utils/logger';
+import { EmbeddingService } from './EmbeddingService.ts';
+import { VectorStore } from './VectorStore.ts';
+import { logger } from '../utils/logger.ts';
 
 export interface RetrievedChunk {
   documentId: string;

@@ -1,4 +1,5 @@
 import winston from 'winston';
+import path from 'path';
 
 const logFormat = winston.format.combine(
   winston.format.timestamp(),
@@ -22,7 +23,7 @@ export const logger = winston.createLogger({
 // For development, also log to file
 if (process.env.NODE_ENV === 'development') {
   logger.add(new winston.transports.File({
-    filename: 'logs/app.log',
+    filename: path.join(import.meta.dirname, '..', 'logs', 'app.log'),
     format: logFormat
   }));
 }

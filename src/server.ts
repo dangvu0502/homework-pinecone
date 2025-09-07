@@ -1,12 +1,8 @@
-import dotenv from 'dotenv';
-import { app } from './app';
-import { testConnection, runMigrations } from './config/database';
-import { logger } from './utils/logger';
+import { app } from './app.ts';
+import { testConnection } from './config/database.ts';
+import { logger } from './utils/logger.ts';
 
-// Load environment variables
-dotenv.config();
-
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Startup sequence
 async function startServer() {
@@ -19,10 +15,6 @@ async function startServer() {
       logger.error('Database connection failed. Server will not start.');
       process.exit(1);
     }
-    
-    // Run migrations (simplified for MVP)
-    logger.info('Running database migrations...');
-    await runMigrations();
     
     // Start HTTP server
     const server = app.listen(PORT, () => {

@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.ts';
 
 // Simplified text extraction for MVP
 export class TextExtractor {
