@@ -38,6 +38,12 @@ export const documentApi = {
     size: number;
     contentType: string;
     filePath: string;
+    metadata?: {
+      totalChunks: number;
+      hasSummary: boolean;
+      summaryGeneratedAt?: string;
+      processedAt?: string;
+    };
   }>> {
     const response = await fetch(`${API_BASE_URL}/documents`);
     return handleResponse(response);
@@ -56,6 +62,29 @@ export const documentApi = {
     filename: string;
   }> {
     const response = await fetch(`${API_BASE_URL}/documents/${id}/status`);
+    return handleResponse(response);
+  },
+
+  async getSummary(documentId: number): Promise<{
+    summary: string | null;
+    message?: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/summary`);
+    return handleResponse(response);
+  },
+
+  async getChunks(documentId: number): Promise<{
+    chunks: Array<{
+      documentId: string;
+      filename: string;
+      text: string;
+      relevanceScore: number;
+      chunkIndex: number;
+    }>;
+    chunkCount: number;
+    message?: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/chunks`);
     return handleResponse(response);
   },
 
@@ -79,21 +108,6 @@ export const documentApi = {
     return handleResponse(response);
   },
 
-  async getInsights(documentId: number): Promise<{
-    keyTopics: string[];
-    suggestedQuestions: string[];
-    summary?: string;
-    overview: {
-      type: string;
-      format: string;
-      size: string;
-      status: string;
-      lastModified?: string;
-    };
-  }> {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/insights`);
-    return handleResponse(response);
-  }
 };
 
 // Chat APIs

@@ -4,14 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface DocumentSummaryCardProps {
   filename: string;
   summary?: string;
-  keyTopics?: string[];
   isLoading?: boolean;
 }
 
 const DocumentSummaryCard: React.FC<DocumentSummaryCardProps> = ({
   filename,
   summary,
-  keyTopics = [],
   isLoading = false
 }) => {
   if (isLoading) {
@@ -25,9 +23,8 @@ const DocumentSummaryCard: React.FC<DocumentSummaryCardProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="font-medium">{filename}</div>
+            <div className="font-medium text-lg">{filename}</div>
             <div className="h-20 bg-gray-100 rounded animate-pulse"></div>
-            <div className="h-6 bg-gray-100 rounded animate-pulse w-3/4"></div>
           </div>
         </CardContent>
       </Card>
@@ -51,19 +48,9 @@ const DocumentSummaryCard: React.FC<DocumentSummaryCardProps> = ({
             </div>
           )}
           
-          {keyTopics.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium">🎯 Key Topics:</span>
-              <div className="flex flex-wrap gap-1">
-                {keyTopics.map((topic, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md"
-                  >
-                    {topic}
-                  </span>
-                ))}
-              </div>
+          {!summary && !isLoading && (
+            <div className="text-sm text-gray-500 italic">
+              No summary available yet. Document may still be processing.
             </div>
           )}
         </div>

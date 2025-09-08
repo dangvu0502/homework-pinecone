@@ -1,6 +1,5 @@
 import { Pinecone, type RecordMetadata } from '@pinecone-database/pinecone';
 import { logger } from '../utils/logger.ts';
-import { OpenAIService } from './OpenAI.ts';
 
 // Types and Interfaces
 export interface DocumentMetadata {
@@ -28,18 +27,6 @@ export interface SearchResult {
   chunkIndex: number;
 }
 
-export interface DocumentInsights {
-  keyTopics: string[];
-  suggestedQuestions: string[];
-  summary?: string;
-  overview: {
-    type: string;
-    format: string;
-    size: string;
-    status: string;
-    lastModified: string;
-  };
-}
 
 // Singleton Pinecone client
 let pineconeClient: Pinecone | null = null;
@@ -66,14 +53,12 @@ export class PineconeDB {
   private indexName: string;
   private embeddingModel: string;
   private embeddingDimension: number;
-  private openAIService: OpenAIService;
   
   constructor() {
     this.client = getPineconeClient();
     this.indexName = process.env.PINECONE_INDEX_NAME || 'rag-challenge-ai';
     this.embeddingModel = process.env.PINECONE_EMBEDDING_MODEL || 'multilingual-e5-large';
     this.embeddingDimension = parseInt(process.env.PINECONE_EMBEDDING_DIMENSION || '1024');
-    this.openAIService = new OpenAIService();
     
     logger.info('PineconeDB initialized', { 
       indexName: this.indexName,
@@ -230,87 +215,6 @@ export class PineconeDB {
     }
   }
 
-  /**
-   * Generate insights for a document
-   */
-  async generateDocumentInsights(documentId: string, document: { content_type: string; size: number; status: string; uploaded_at?: Date | string }): Promise<DocumentInsights> {
-    try {
-      const index = this.client.index(this.indexName);
-      
-      // Query for document chunks - use the default namespace
-      const dummyVector = new Array(this.embeddingDimension).fill(0);
-      const searchResponse = await index.namespace('default').query({
-        vector: dummyVector,
-        filter: { documentId: { $eq: String(documentId) } },
-        topK: 10,
-        includeMetadata: true
-      });
-      
-      const chunks = searchResponse.matches || [];
-      
-      // Extract key topics from chunk metadata
-      const keyTopics = this.extractKeyTopics(chunks);
-      
-      // Generate suggested questions based on document type
-      const suggestedQuestions = this.generateQuestions(document.content_type);
-      
-      // Generate document summary using chunks
-      let summary: string | undefined;
-      if (chunks.length > 0) {
-        logger.info('Generating summary for document', { documentId, chunkCount: chunks.length });
-        try {
-          summary = await this.generateSummary(chunks);
-          logger.info('Summary generated successfully', { documentId, summaryLength: summary?.length });
-        } catch (error) {
-          logger.error('Failed to generate summary', { documentId, error });
-          summary = undefined;
-        }
-      } else {
-        logger.info('No chunks found for summary generation', { documentId });
-      }
-      
-      return {
-        keyTopics,
-        suggestedQuestions,
-        summary,
-        overview: {
-          type: this.getDocumentType(document.content_type),
-          format: document.content_type,
-          size: this.formatFileSize(document.size),
-          status: document.status,
-          lastModified: document.uploaded_at ? new Date(document.uploaded_at).toISOString() : new Date().toISOString()
-        }
-      };
-    } catch (error) {
-      logger.error('Failed to generate insights', { documentId, error });
-      throw error;
-    }
-  }
-  
-  // Helper methods
-  /**
-   * Generate a summary for document chunks using OpenAI
-   */
-  private async generateSummary(chunks: Array<{ metadata?: Record<string, unknown> }>): Promise<string> {
-    try {
-      // Extract text from chunks
-      const chunkTexts = chunks.map(chunk => {
-        const text = chunk.metadata?.text;
-        return typeof text === 'string' ? text : String(text || '');
-      }).filter(text => text.length > 0);
-      
-      if (chunkTexts.length === 0) {
-        return 'No content available for summary.';
-      }
-      
-      // Use OpenAI service to generate summary
-      return await this.openAIService.generateSummary(chunkTexts);
-    } catch (error) {
-      logger.error('Failed to generate summary in PineconeService', { error });
-      return 'Unable to generate summary at this time.';
-    }
-  }
-  
   private formatSearchResults(matches: Array<{ metadata?: Record<string, unknown>; score?: number }>): SearchResult[] {
     return matches.map(match => {
       const metadata = match.metadata;
@@ -326,51 +230,6 @@ export class PineconeDB {
     });
   }
 
-  private extractKeyTopics(chunks: Array<{ metadata?: Record<string, unknown> }>): string[] {
-    const topics = new Set<string>();
-    
-    chunks.forEach(chunk => {
-      // Text is now stored directly in metadata
-      const text = String(chunk.metadata?.text || '');
-      // Simple keyword extraction (can be enhanced)
-      const words = text.split(/\s+/)
-        .filter((word: string) => word.length > 5)
-        .slice(0, 3);
-      words.forEach((word: string) => topics.add(word));
-    });
-    
-    return Array.from(topics).slice(0, 5);
-  }
-  
-  private generateQuestions(contentType: string): string[] {
-    const baseQuestions = [
-      'What is the main topic of this document?',
-      'Can you summarize the key points?',
-      'What are the important details mentioned?'
-    ];
-    
-    if (contentType?.includes('pdf')) {
-      baseQuestions.push('What sections does this PDF contain?');
-    } else if (contentType?.includes('text')) {
-      baseQuestions.push('What is the structure of this text?');
-    }
-    
-    return baseQuestions;
-  }
-  
-  private getDocumentType(contentType: string): string {
-    if (!contentType) return 'Unknown';
-    if (contentType.includes('pdf')) return 'PDF Document';
-    if (contentType.includes('text')) return 'Text File';
-    if (contentType.includes('image')) return 'Image';
-    return 'Document';
-  }
-  
-  private formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
 }
 
 // Export singleton instance

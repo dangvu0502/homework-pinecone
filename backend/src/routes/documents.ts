@@ -16,8 +16,11 @@ router.get('/:id', documentController.getById);
 // GET /api/documents/:id/status - Get document status
 router.get('/:id/status', documentController.getStatus);
 
-// GET /api/documents/:id/insights - Get document insights
-router.get('/:id/insights', documentController.getInsights);
+// GET /api/documents/:id/summary - Get document summary
+router.get('/:id/summary', documentController.getSummary);
+
+// GET /api/documents/:id/chunks - Get all document chunks
+router.get('/:id/chunks', documentController.getChunks);
 
 // POST /api/documents/:id/search - Search within document
 router.post('/:id/search', documentController.searchDocument);

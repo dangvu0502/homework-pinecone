@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { documentApi, chatApi } from '../services/api';
 import { useDocumentStore } from '../stores/useDocumentStore';
 import { useChatStore } from '../stores/useChatStore';
+import { useDocumentMetadataStore } from '../stores/useDocumentMetadataStore';
 
 // Document Hooks
 export const useUploadDocument = () => {
@@ -25,9 +26,29 @@ export const useUploadDocument = () => {
 };
 
 export const useDocuments = () => {
+  const { setMetadata } = useDocumentMetadataStore();
+  
   return useQuery({
     queryKey: ['documents'],
-    queryFn: documentApi.list,
+    queryFn: async () => {
+      const documents = await documentApi.list();
+      
+      // Store metadata for each document
+      documents.forEach(doc => {
+        setMetadata(doc.id.toString(), {
+          id: doc.id.toString(),
+          filename: doc.filename,
+          totalChunks: doc.metadata?.totalChunks || 0,
+          summary: doc.metadata?.hasSummary ? undefined : null, // Don't overwrite existing summary
+          status: doc.status as 'pending' | 'processing' | 'processed' | 'failed',
+          uploadedAt: doc.uploadedAt,
+          size: doc.size,
+          contentType: doc.contentType,
+        });
+      });
+      
+      return documents;
+    },
   });
 };
 
@@ -49,8 +70,8 @@ export const useDocumentStatus = (documentId: number | null) => {
     queryKey: ['document-status', documentId],
     queryFn: () => documentId ? documentApi.getStatus(documentId) : null,
     enabled: !!documentId,
-    refetchInterval: (data) => {
-      if (data?.status === 'processing') {
+    refetchInterval: (query) => {
+      if (query.state.data?.status === 'processing') {
         return 2000; // Poll every 2 seconds while processing
       }
       return false; // Stop polling when done
@@ -65,14 +86,46 @@ export const useSearchDocument = () => {
   });
 };
 
-export const useDocumentInsights = (documentId: number | null) => {
+export const useDocumentSummary = (documentId: number | null) => {
+  const { getMetadata, updateMetadata } = useDocumentMetadataStore();
+  
   return useQuery({
-    queryKey: ['document-insights', documentId],
-    queryFn: () => documentId ? documentApi.getInsights(documentId) : null,
+    queryKey: ['document-summary', documentId],
+    queryFn: async () => {
+      if (!documentId) return null;
+      
+      // Check cache first
+      const cached = getMetadata(documentId.toString());
+      if (cached?.summary) {
+        console.log('Using cached summary for document', documentId);
+        return { summary: cached.summary, cached: true };
+      }
+      
+      // Fetch from API
+      const result = await documentApi.getSummary(documentId);
+      
+      // Update cache
+      if (result.summary) {
+        updateMetadata(documentId.toString(), {
+          summary: result.summary,
+        });
+      }
+      
+      return result;
+    },
     enabled: !!documentId,
-    retry: 1, // Only retry once to avoid excessive API calls
+    retry: 1,
   });
 };
+
+export const useDocumentChunks = (documentId: number | null) => {
+  return useQuery({
+    queryKey: ['document-chunks', documentId],
+    queryFn: () => documentId ? documentApi.getChunks(documentId) : null,
+    enabled: !!documentId,
+  });
+};
+
 
 // Chat Hooks
 export const useCreateChatSession = () => {

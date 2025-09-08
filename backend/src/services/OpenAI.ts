@@ -43,8 +43,55 @@ export class OpenAIService {
         return textContent;
       }
       
-      // For images and other documents, use GPT-4 Vision
-      logger.info('Extracting text from file using GPT-4 Vision', { filePath, mimeType });
+      // Handle PDF files using pdfjs-dist library
+      if (mimeType === 'application/pdf') {
+        logger.info('Extracting text from PDF using pdfjs-dist', { filePath, mimeType });
+        
+        try {
+          // Dynamic import to avoid initialization issues
+          const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+          
+          // Read the PDF file
+          const data = new Uint8Array(await fs.readFile(filePath));
+          
+          // Load the PDF document
+          const loadingTask = pdfjsLib.getDocument({ data });
+          const pdfDoc = await loadingTask.promise;
+          
+          let fullText = '';
+          const numPages = pdfDoc.numPages;
+          
+          // Extract text from each page
+          for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            const page = await pdfDoc.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ');
+            fullText += pageText + '\n\n';
+          }
+          
+          logger.info('PDF text extraction completed', {
+            filePath,
+            pages: numPages,
+            textLength: fullText.length
+          });
+          
+          return fullText.trim();
+        } catch (pdfError) {
+          logger.error('PDF parsing failed', { filePath, error: pdfError });
+          // Fallback to a simple message if PDF parsing fails
+          return `[PDF Document]\n\nUnable to extract text from this PDF file. The file may be corrupted or contain only images.\n\nFile: ${filePath}`;
+        }
+      }
+      
+      // For images and other supported documents, use GPT-4 Vision
+      if (!mimeType.startsWith('image/')) {
+        logger.warn('Unsupported file type for GPT-4 Vision', { filePath, mimeType });
+        throw new Error(`Unsupported file type: ${mimeType}. Only text and image files are supported.`);
+      }
+      
+      logger.info('Extracting text from image using GPT-4 Vision', { filePath, mimeType });
       
       const fileContent = await fs.readFile(filePath);
       const base64 = fileContent.toString('base64');
@@ -56,7 +103,7 @@ export class OpenAIService {
           content: [
             {
               type: 'text',
-              text: 'Extract all text content from this document. Include tables, headers, paragraphs, and all readable text. Preserve the structure and formatting where possible. Return only the extracted text content.'
+              text: 'Extract all text content from this image. Include tables, headers, paragraphs, and all readable text. Preserve the structure and formatting where possible. Return only the extracted text content.'
             },
             {
               type: 'image_url',
@@ -66,7 +113,6 @@ export class OpenAIService {
             }
           ]
         }],
-        max_tokens: 4096
       });
       
       const extractedText = response.choices[0].message.content || '';
@@ -84,66 +130,72 @@ export class OpenAIService {
   }
   
   /**
-   * 
-   * Intelligent semantic chunking using GPT
+   * Semantic chunking using GPT with batch processing for large documents
    */
-  async intelligentChunk(text: string, filename: string): Promise<ChunkingResult> {
+  async chunk(text: string, filename: string): Promise<ChunkingResult> {
     try {
       const documentType = this.detectDocumentType(filename);
       
-      logger.info('Starting intelligent chunking', {
+      logger.info('Starting chunking', {
         filename,
         documentType,
         textLength: text.length
       });
+
+      let textParts: string[];
       
-      const response = await this.client.chat.completions.create({
-        model: 'gpt-4-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert at chunking documents semantically. Create chunks that:
-1. Preserve semantic meaning and context
-2. Keep related information together
-3. Target 500-1000 tokens per chunk for optimal embedding
-4. Maintain natural boundaries (sections, paragraphs, topics)
-5. Include context clues at chunk boundaries
-
-Return as JSON with structure: {"chunks": ["chunk1", "chunk2", ...]}`
-          },
-          {
-            role: 'user',
-            content: `Document Type: ${documentType}
-            
-Please chunk this document intelligently:
-
-${text.substring(0, 10000)}${text.length > 10000 ? '...[truncated]' : ''}
-
-Return chunks as a JSON array.`
-          }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3
+      // Determine how to split the document
+      if (text.length > 50000) {
+        // For very large documents, split by word limit
+        logger.info('Large document detected, splitting by word limit', { textLength: text.length });
+        const wordLimit = 6000;
+        textParts = this.splitDocumentByWordLimit(text, wordLimit);
+      } else {
+        // For smaller documents, use as single part or split if needed
+        const maxTextLength = 30000;
+        if (text.length > maxTextLength) {
+          textParts = [
+            text.substring(0, maxTextLength) + '\n\n[Note: This is a large document. Additional content follows similar patterns.]',
+            text.substring(maxTextLength)
+          ];
+        } else {
+          textParts = [text];
+        }
+      }
+      
+      logger.info('Document split into parts', { partCount: textParts.length });
+      
+      // Process all parts in parallel using Promise.all
+      const partPromises = textParts.map(async (part, index) => {
+        const partName = textParts.length > 1 ? `${filename}-part${index + 1}` : filename;
+        
+        try {
+          return await this.chunkTextWithOpenAI(part, documentType, partName);
+        } catch (error) {
+          logger.error(`Processing failed for ${partName}, using fallback`, { error });
+          return this.fallbackChunking(part);
+        }
       });
       
-      const result = JSON.parse(response.choices[0].message.content || '{"chunks":[]}');
-      const chunks = result.chunks || this.fallbackChunking(text);
+      // Wait for all parts to complete
+      const allPartChunks = await Promise.all(partPromises);
+      const allChunks = allPartChunks.flat();
       
-      logger.info('Intelligent chunking completed', {
-        chunkCount: chunks.length,
-        averageChunkSize: Math.round(text.length / chunks.length)
+      logger.info('Chunking completed', { 
+        totalChunks: allChunks.length,
+        averageChunkSize: Math.round(text.length / allChunks.length)
       });
       
       return {
-        chunks,
+        chunks: allChunks,
         metadata: {
-          chunkCount: chunks.length,
-          averageChunkSize: Math.round(text.length / chunks.length),
+          chunkCount: allChunks.length,
+          averageChunkSize: Math.round(text.length / allChunks.length),
           documentType
         }
       };
     } catch (error) {
-      logger.error('Intelligent chunking failed, using fallback', { filename, error });
+      logger.error('Chunking failed, using fallback', { filename, error });
       return {
         chunks: this.fallbackChunking(text),
         metadata: {
@@ -154,37 +206,152 @@ Return chunks as a JSON array.`
       };
     }
   }
+
+  /**
+   * Chunk a single text using OpenAI
+   */
+  private async chunkTextWithOpenAI(text: string, documentType: string, partName: string): Promise<string[]> {
+    const response = await this.client.chat.completions.create({
+      model: 'gpt-4-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert at chunking documents semantically. Create chunks that:
+1. Preserve semantic meaning and context
+2. Keep related information together
+3. Target 500-1000 tokens per chunk for optimal embedding
+4. Maintain natural boundaries (paragraphs, topics)
+5. Include context clues at chunk boundaries
+
+Return as JSON with structure: {"chunks": ["chunk1", "chunk2", ...]}`
+        },
+        {
+          role: 'user',
+          content: `Document Type: ${documentType}
+${partName.includes('part') ? `Part: ${partName}` : ''}
+
+Please chunk this document intelligently:
+
+${text}
+
+Return chunks as a JSON array.`
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3
+    });
+    
+    const result = JSON.parse(response.choices[0].message.content || '{"chunks":[]}');
+    return result.chunks || this.fallbackChunking(text);
+  }
+
+  /**
+   * Split document by word limit for batch processing
+   */
+  private splitDocumentByWordLimit(text: string, wordLimit: number): string[] {
+    const parts: string[] = [];
+    const words = text.split(/\s+/);
+    let currentPart: string[] = [];
+    let currentWordCount = 0;
+    
+    for (const word of words) {
+      // If adding this word would exceed the limit and we have content, save current part
+      if (currentWordCount + 1 > wordLimit && currentPart.length > 0) {
+        parts.push(currentPart.join(' '));
+        currentPart = [word];
+        currentWordCount = 1;
+      } else {
+        currentPart.push(word);
+        currentWordCount++;
+      }
+    }
+    
+    // Add the last part if it has content
+    if (currentPart.length > 0) {
+      parts.push(currentPart.join(' '));
+    }
+    
+    logger.info('Document split by word limit', {
+      totalWords: words.length,
+      wordLimit,
+      partsCreated: parts.length,
+      averageWordsPerPart: Math.round(words.length / parts.length)
+    });
+    
+    return parts;
+  }
+
   
   /**
    * Generate a summary for document chunks
    */
   async generateSummary(chunks: string[]): Promise<string> {
     try {
-      const combinedText = chunks.slice(0, 5).join('\n\n'); // Use first 5 chunks for summary
-      const prompt = `Please provide a concise summary of the following document content. Focus on the main topics, key points, and important information. Keep the summary between 2-4 sentences.
+      logger.info('Generating summary', { chunkCount: chunks.length });
+      
+      // For documents with many chunks, use a smarter sampling strategy
+      let selectedChunks: string[];
+      
+      if (chunks.length <= 5) {
+        // Use all chunks for small documents
+        selectedChunks = chunks;
+      } else if (chunks.length <= 15) {
+        // For medium documents, use first, middle, and last chunks
+        const firstChunk = chunks[0];
+        const middleChunk = chunks[Math.floor(chunks.length / 2)];
+        const lastChunk = chunks[chunks.length - 1];
+        selectedChunks = [firstChunk, middleChunk, lastChunk];
+      } else {
+        // For large documents, sample more strategically
+        const step = Math.floor(chunks.length / 6);
+        selectedChunks = [
+          chunks[0], // Introduction/first chapter
+          chunks[step], 
+          chunks[step * 2],
+          chunks[step * 3],
+          chunks[step * 4],
+          chunks[chunks.length - 1] // Conclusion/last chapter
+        ];
+      }
+      
+      const combinedText = selectedChunks.join('\n\n---\n\n');
+      
+      const prompt = `Please provide a comprehensive summary of this document. The content represents key sections from throughout the document. Focus on:
+
+1. Main topics and themes
+2. Key points and important information  
+3. Overall structure and flow
+4. Any conclusions or key takeaways
+
+Keep the summary informative but concise (3-5 sentences).
 
 Document content:
-${combinedText}
-
-Summary:`;
+${combinedText}`;
 
       const response = await this.client.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that creates concise, informative summaries of documents.'
+            content: 'You are a helpful assistant that creates comprehensive, informative summaries of documents. You understand that the content may be sampled from different sections of a larger document.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        max_tokens: 200,
+        max_tokens: 300, // Increased for better summaries
         temperature: 0.3,
       });
 
-      return response.choices[0]?.message?.content || 'Unable to generate summary.';
+      const summary = response.choices[0]?.message?.content || 'Unable to generate summary.';
+      logger.info('Summary generated successfully', { 
+        chunkCount: chunks.length, 
+        selectedChunks: selectedChunks.length,
+        summaryLength: summary.length 
+      });
+      
+      return summary;
     } catch (error) {
       logger.error('Failed to generate summary', { error });
       return 'Summary generation failed. Please try again later.';

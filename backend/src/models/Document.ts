@@ -13,6 +13,8 @@ export interface Document {
   processed_at?: Date | null;
   error_message?: string | null;
   chunk_count?: number | null;
+  summary?: string | null;
+  summary_generated_at?: Date | null;
 }
 
 export interface CreateDocumentDto {

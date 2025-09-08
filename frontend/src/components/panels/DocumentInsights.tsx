@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchDocument, useDocumentInsights, useDocuments } from '../../hooks/useApi';
+import React from 'react';
+import { useDocuments, useDocumentSummary, useDocumentChunks } from '../../hooks/useApi';
 import DocumentSummaryCard from '../cards/DocumentSummaryCard';
 import DocumentChunksBrowser from '../cards/DocumentChunksBrowser';
 
@@ -8,77 +8,20 @@ interface QuickSearchProps {
   documentId?: number | null;
 }
 
-interface ChunkItem {
-  documentId: string;
-  filename: string;
-  text: string;
-  relevanceScore: number;
-  chunkIndex: number;
-}
-
 const QuickSearch: React.FC<QuickSearchProps> = ({ selectedDocument, documentId }) => {
-  const [chunks, setChunks] = useState<ChunkItem[]>([]);
-  const [chunksLoading, setChunksLoading] = useState(false);
-  const searchDocument = useSearchDocument();
-  
   // Convert selectedDocument string to numeric documentId for API calls
   const numericDocumentId = documentId || (selectedDocument ? parseInt(selectedDocument) : null);
   
-  // Get document insights and document list data
-  const { data: insights, isLoading: insightsLoading } = useDocumentInsights(numericDocumentId);
+  // Get document list data, summary, and chunks
   const { data: documents } = useDocuments();
+  const { data: summaryData, isLoading: summaryLoading } = useDocumentSummary(numericDocumentId);
+  const { data: chunksData, isLoading: chunksLoading } = useDocumentChunks(numericDocumentId);
   
   // Find current document data
   const currentDocument = documents?.find(doc => doc.id === numericDocumentId);
-
-
-  // Load all chunks using wildcard search
-  const loadAllChunks = async () => {
-    if (!numericDocumentId) {
-      setChunks([]);
-      return;
-    }
-    
-    setChunksLoading(true);
-    try {
-      // Use a broad search query to get all chunks
-      const result = await searchDocument.mutateAsync({ 
-        documentId: numericDocumentId, 
-        query: '*' // This should return all chunks
-      });
-      
-      if (result.results) {
-        setChunks(result.results);
-      }
-    } catch (error) {
-      console.error('Failed to load chunks:', error);
-      // Fallback: try with empty query
-      try {
-        const result = await searchDocument.mutateAsync({ 
-          documentId: numericDocumentId, 
-          query: '' 
-        });
-        if (result.results) {
-          setChunks(result.results);
-        }
-      } catch (fallbackError) {
-        console.error('Failed to load chunks (fallback):', fallbackError);
-        setChunks([]);
-      }
-    } finally {
-      setChunksLoading(false);
-    }
-  };
-
-
-  // Load chunks when selected document changes
-  useEffect(() => {
-    if (numericDocumentId) {
-      loadAllChunks();
-    } else {
-      setChunks([]);
-    }
-  }, [selectedDocument, numericDocumentId]);
+  
+  // Extract chunks from the response
+  const chunks = chunksData?.chunks || [];
 
   // Show placeholder when no document is selected
   if (!selectedDocument || !numericDocumentId) {
@@ -105,9 +48,8 @@ const QuickSearch: React.FC<QuickSearchProps> = ({ selectedDocument, documentId 
         {/* Document Summary Card */}
         <DocumentSummaryCard
           filename={currentDocument?.filename || 'Unknown Document'}
-          summary={insights?.summary || (insights?.overview ? `Document type: ${insights.overview.type}. Status: ${insights.overview.status}.` : undefined)}
-          keyTopics={insights?.keyTopics}
-          isLoading={insightsLoading}
+          summary={summaryData?.summary || undefined}
+          isLoading={summaryLoading}
         />
 
         {/* Document Chunks Browser */}

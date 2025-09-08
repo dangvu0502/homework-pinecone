@@ -26,10 +26,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const {
     isStreaming,
     streamingMessage,
+    streamingSessionId,
     clearMessages,
     createSession,
     sendMessage,
     currentSession,
+    getOrCreateSessionForDocument,
+    switchToDocumentSession,
   } = useChatStore();
 
   const scrollToBottom = () => {
@@ -83,11 +86,15 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   }, []);
 
-  // Clear chat when selected document changes
+  // Switch to document's session when selected document changes
   useEffect(() => {
-    clearMessages();
-    // Note: currentSession will be handled when user sends first message
-  }, [selectedDocument, clearMessages]);
+    const switchSession = async () => {
+      if (selectedDocument) {
+        await switchToDocumentSession(selectedDocument);
+      }
+    };
+    switchSession();
+  }, [selectedDocument, switchToDocumentSession]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isStreaming) return;
@@ -95,9 +102,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     const messageContent = input.trim();
     setInput("");
 
-    // Create session if needed
+    // Create or get session for current document if needed
     if (!currentSession && selectedDocument) {
-      await createSession("New Chat Session", [selectedDocument]);
+      await getOrCreateSessionForDocument(selectedDocument);
     }
 
     // Use the real sendMessage API from the store
@@ -174,7 +181,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
-            {streamingMessage && (
+            {streamingMessage && streamingSessionId === currentSession?.id && (
               <StreamingMessage
                 content={streamingMessage}
                 isStreaming={isStreaming}
