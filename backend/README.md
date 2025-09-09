@@ -1,128 +1,72 @@
-# Express TypeScript Backend
+# RAG Challenge - Backend
 
-A type-safe RESTful API backend built with Express and TypeScript.
+Document processing and retrieval API with vector search capabilities.
 
-## Features
+## Tech Stack
+- **Node.js** + **TypeScript** + **Express**
+- **SQLite** + **Knex** (database & migrations)
+- **Pinecone** (vector database)
+- **OpenAI** (embeddings & chat)
+- **Multer** (file uploads)
 
-- ✨ TypeScript for type safety
-- 🚀 Express.js framework
-- 🛡️ Helmet for security headers
-- 📝 Request logging with Morgan
-- 🔧 Environment configuration with dotenv
-- 🔄 CORS support
-- 📦 In-memory data storage
-
-## Installation
-
+## Setup
 ```bash
 npm install
+cp .env.example .env  # Add your API keys
+npm run migrate:latest
 ```
 
-## Configuration
-
-Copy `.env.example` to `.env`:
-
+## Development
 ```bash
-cp .env.example .env
+npm run dev       # Start dev server (port 3001)
+npm run typecheck # Type checking
+npm run lint      # Linting
 ```
 
-## Scripts
-
-### Development (with hot reload)
+## Database
 ```bash
-npm run dev
-```
-
-### Build for production
-```bash
-npm run build
-```
-
-### Run production build
-```bash
-npm start
-```
-
-### Type checking
-```bash
-npm run typecheck
+npm run migrate:latest   # Run migrations
+npm run migrate:rollback # Rollback
+npm run migrate:make <name> # Create migration
 ```
 
 ## API Endpoints
 
-### Health Check
-- `GET /health` - Server health status
+### Documents
+- `POST /api/documents/upload` - Upload document (PDF/TXT)
+- `GET /api/documents` - List all documents
+- `GET /api/documents/:id` - Get document details
+- `GET /api/documents/:id/summary` - Get document summary
+- `GET /api/documents/:id/chunks` - Get document chunks
+- `DELETE /api/documents/:id` - Delete document
 
-### Users
-- `GET /api/users` - Get all users
-- `GET /api/users/:id` - Get user by ID
-- `POST /api/users` - Create new user
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
+### Chat
+- `POST /api/chat` - Chat with documents (RAG)
+- `GET /api/chat/history` - Get chat history
 
-### Posts
-- `GET /api/posts` - Get all posts (query params: `userId`, `sort`)
-- `GET /api/posts/:id` - Get post by ID
-- `POST /api/posts` - Create new post
-- `PUT /api/posts/:id` - Update post
-- `DELETE /api/posts/:id` - Delete post
+### Search
+- `POST /api/search` - Search documents by query
 
-## Example API Calls
+### SSE
+- `GET /api/sse/status` - Real-time document processing status
 
-### Create a user
-```bash
-curl -X POST http://localhost:3000/api/users \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Alice Johnson", "email": "alice@example.com"}'
-```
-
-### Create a post
-```bash
-curl -X POST http://localhost:3000/api/posts \
-  -H "Content-Type: application/json" \
-  -d '{"title": "My Post", "content": "Post content", "userId": 1}'
-```
-
-### Get filtered posts
-```bash
-curl "http://localhost:3000/api/posts?userId=1&sort=desc"
+## Environment Variables
+```env
+PORT=3001
+DATABASE_URL=./database.sqlite3
+OPENAI_API_KEY=your_key
+PINECONE_API_KEY=your_key
+PINECONE_INDEX_NAME=your_index
 ```
 
 ## Project Structure
-
 ```
 src/
-├── server.ts          # Main server file
-├── types/             # TypeScript type definitions
-│   └── index.ts      
-└── routes/            # API routes
-    ├── api.ts        # Main API router
-    ├── users.ts      # User endpoints
-    └── posts.ts      # Post endpoints
+├── controllers/    # Request handlers
+├── services/       # Business logic (OpenAI, Pinecone)
+├── models/         # Database models
+├── routes/         # API routes
+├── middleware/     # Auth, error handling
+├── migrations/     # Database migrations
+└── uploads/        # File storage
 ```
-
-## Type Definitions
-
-The application uses strongly typed interfaces for all data models:
-
-- `User` - User entity
-- `Post` - Post entity
-- `CreateUserDto` - User creation data
-- `UpdateUserDto` - User update data
-- `CreatePostDto` - Post creation data
-- `UpdatePostDto` - Post update data
-
-## Technologies
-
-- **TypeScript** - Type-safe JavaScript
-- **Express** - Web framework
-- **tsx** - TypeScript execution for development
-- **cors** - Cross-origin resource sharing
-- **helmet** - Security headers
-- **morgan** - HTTP request logger
-- **dotenv** - Environment variables
-
-## Requirements
-
-- Node.js 18+
-- npm or yarn

@@ -1,69 +1,74 @@
-# React + TypeScript + Vite
+# RAG Challenge - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern document management interface with AI-powered search and chat.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **React 19** + **TypeScript** + **Vite**
+- **TanStack Query** (data fetching)
+- **Zustand** (state management)
+- **Tailwind CSS** + **Radix UI** (styling)
+- **React Dropzone** (file uploads)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Setup
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Development
+```bash
+npm run dev       # Start dev server (port 5173)
+npm run build     # Production build
+npm run preview   # Preview production build
+npm run typecheck # Type checking
+npm run lint      # Linting
 ```
+
+## Features
+
+### Document Management
+- Drag & drop file upload (PDF/TXT)
+- Real-time processing status
+- Document list with metadata
+- Delete documents
+
+### Document Viewer
+- View document summary
+- Browse document chunks
+- Copy chunk content
+- View embeddings info
+
+### AI Chat Interface
+- Chat with uploaded documents
+- Context-aware responses (RAG)
+- Chat history
+- Real-time streaming responses
+
+### Search
+- Semantic search across documents
+- View relevant chunks
+- Filter by document
+
+## Project Structure
+```
+src/
+├── components/
+│   ├── cards/         # Document cards, summary, chunks
+│   ├── chat/          # Chat interface components
+│   ├── layout/        # Layout components
+│   ├── panels/        # Main panels (upload, insights)
+│   └── ui/            # Reusable UI components
+├── hooks/             # Custom React hooks
+├── services/          # API client
+├── stores/            # Zustand stores
+└── types/             # TypeScript types
+```
+
+## Environment
+API endpoint configured in `services/api.ts` (default: `http://localhost:3001`)
+
+## UI Components
+- **ThreePanelLayout**: Main application layout
+- **DocumentUploadPanel**: File upload with dropzone
+- **DocumentInsights**: Document viewer and chunks browser
+- **ChatInterface**: AI chat with documents
+- **DocumentList**: Browse uploaded documents
