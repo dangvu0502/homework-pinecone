@@ -303,7 +303,12 @@ export class DocumentController {
         );
 
         // Sort chunks by chunkIndex to maintain proper order
-        const sortedChunks = searchResults.sort((a, b) => a.chunkIndex - b.chunkIndex);
+        const sortedChunks = searchResults
+          .sort((a, b) => a.chunkIndex - b.chunkIndex)
+          .map(chunk => ({
+            ...chunk,
+            relevanceScore: 0 // Not meaningful when listing all chunks
+          }));
 
         res.json({
           chunks: sortedChunks,

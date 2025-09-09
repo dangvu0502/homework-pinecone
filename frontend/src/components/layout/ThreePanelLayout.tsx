@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { FileText, BarChart } from "lucide-react";
 import DocumentPanel from "../panels/DocumentPanel";
 import ChatPanel from "../panels/ChatPanel";
-import QuickSearch from "../panels/DocumentInsights";
+import DocumentInsights from "../panels/DocumentInsights";
 import Header from "./Header";
 
 const ThreePanelLayout: React.FC = () => {
@@ -94,7 +94,10 @@ const ThreePanelLayout: React.FC = () => {
                 <SheetTitle>Quick Search</SheetTitle>
               </SheetHeader>
               <div className="flex-1 overflow-y-auto">
-                <QuickSearch selectedDocument={selectedDocument} />
+                <DocumentInsights 
+                  selectedDocument={selectedDocument} 
+                  selectedDocumentName={selectedDocumentObj?.filename}
+                />
               </div>
             </SheetContent>
           </Sheet>
@@ -137,7 +140,10 @@ const ThreePanelLayout: React.FC = () => {
 
         {panelVisibility.insights && (
           <div className="w-96 xl:w-[28rem] flex-shrink-0 border-l border-border bg-card overflow-y-auto">
-            <QuickSearch selectedDocument={selectedDocument} />
+            <DocumentInsights 
+              selectedDocument={selectedDocument}
+              selectedDocumentName={selectedDocumentObj?.filename}
+            />
           </div>
         )}
       </div>
