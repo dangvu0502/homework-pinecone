@@ -13,7 +13,19 @@ async function handleResponse<T>(response: Response): Promise<T> {
     const error = await response.json().catch(() => ({ error: 'Network error' }));
     throw new ApiError(response.status, error.error || 'Request failed');
   }
-  return response.json();
+  
+  // Handle empty responses
+  const text = await response.text();
+  if (!text.trim()) {
+    return {} as T;
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('Failed to parse JSON response:', text);
+    throw new Error('Invalid JSON response from server');
+  }
 }
 
 // Document APIs
@@ -180,5 +192,11 @@ export const chatApi = {
   }> {
     const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`);
     return handleResponse(response);
+  }
+};
+
+export const notificationApi = {
+  createEventSource(): EventSource {
+    return new EventSource(`${API_BASE_URL}/documents/events`);
   }
 };

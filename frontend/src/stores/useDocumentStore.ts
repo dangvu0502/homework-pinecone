@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { documentApi } from '../services/api';
+import { documentApi, notificationApi } from '../services/api';
 
 export interface Document {
   id: string;
@@ -17,6 +17,7 @@ interface DocumentStore {
   processingStatus: Record<string, 'processing' | 'ready' | 'error'>;
   isLoading: boolean;
   error: string | null;
+  eventSource: EventSource | null;
   
   // Actions
   addDocument: (document: Document) => void;
@@ -31,6 +32,10 @@ interface DocumentStore {
   fetchDocuments: () => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
   pollDocumentStatus: (id: string) => Promise<void>;
+  
+  // SSE Actions
+  initializeSSE: () => void;
+  closeSSE: () => void;
 }
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
@@ -38,6 +43,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   processingStatus: {},
   isLoading: false,
   error: null,
+  eventSource: null,
   
   addDocument: (document) =>
     set((state) => ({
@@ -113,8 +119,10 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         isLoading: false,
       }));
       
-      // Start polling for status
-      get().pollDocumentStatus(newDoc.id);
+      // Initialize SSE if not already connected
+      if (!get().eventSource) {
+        get().initializeSSE();
+      }
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Upload failed', isLoading: false });
     }
@@ -133,6 +141,11 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         uploadedAt: doc.uploadedAt,
       }));
       set({ documents, isLoading: false });
+      
+      // Initialize SSE if not already connected
+      if (!get().eventSource) {
+        get().initializeSSE();
+      }
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to fetch documents', isLoading: false });
     }
@@ -188,5 +201,67 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     };
     
     await poll();
+  },
+  
+  initializeSSE: () => {
+    const state = get();
+    if (state.eventSource) {
+      state.eventSource.close();
+    }
+    
+    const eventSource = notificationApi.createEventSource();
+    
+    eventSource.onopen = () => {
+      console.log('SSE connection opened');
+    };
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'document_status') {
+          const { documentId, status, chunkCount } = data.data;
+          
+          // Update document status
+          set((state) => ({
+            documents: state.documents.map(doc =>
+              doc.id === documentId 
+                ? { 
+                    ...doc, 
+                    status: status === 'processed' ? 'ready' : status,
+                    ...(chunkCount && { chunkCount })
+                  } 
+                : doc
+            ),
+            processingStatus: {
+              ...state.processingStatus,
+              [documentId]: status === 'processed' ? 'ready' : status,
+            },
+          }));
+          
+          console.log(`Document ${documentId} status updated to: ${status}`);
+        }
+      } catch (error) {
+        console.error('Failed to parse SSE message:', error);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      // Automatically reconnect after a delay
+      setTimeout(() => {
+        get().initializeSSE();
+      }, 5000);
+    };
+    
+    set({ eventSource });
+  },
+  
+  closeSSE: () => {
+    const state = get();
+    if (state.eventSource) {
+      state.eventSource.close();
+      set({ eventSource: null });
+    }
   },
 }));

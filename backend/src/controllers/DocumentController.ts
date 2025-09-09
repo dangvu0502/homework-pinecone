@@ -5,6 +5,7 @@ import fileStorageService from '../services/FileStorageService.ts';
 import { pineconeDB } from '../services/PineconeService.ts';
 import { OpenAIService } from '../services/OpenAI.ts';
 import { logger } from '../utils/logger.ts';
+import { notificationService } from '../services/NotificationService.ts';
 
 export class DocumentController {
   constructor() {
@@ -430,6 +431,14 @@ export class DocumentController {
         chunk_count: chunks.length
       });
       
+      // 6. Notify clients about successful processing
+      notificationService.notifyDocumentUpdate({
+        documentId,
+        status: 'processed',
+        filename: file.originalname,
+        chunkCount: chunks.length
+      });
+      
       logger.info('Document processed successfully', { 
         documentId, 
         chunkCount: chunks.length 
@@ -440,6 +449,14 @@ export class DocumentController {
       await DocumentModel.update(documentId, {
         status: 'failed',
         error_message: error instanceof Error ? error.message : 'Processing failed'
+      });
+      
+      // Notify clients about failed processing
+      notificationService.notifyDocumentUpdate({
+        documentId,
+        status: 'failed',
+        filename: file.originalname,
+        error: error instanceof Error ? error.message : 'Processing failed'
       });
     }
   }
