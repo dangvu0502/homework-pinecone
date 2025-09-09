@@ -13,9 +13,7 @@ interface DocumentUploadProps {
   documents?: Document[];
 }
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ 
-  onDocumentUploaded, 
-}) => {
+const DocumentUpload: React.FC<DocumentUploadProps> = () => {
   const { uploadDocument, isLoading: isUploading, error } = useDocumentStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -141,31 +139,28 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   });
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="w-full">
-        <ErrorAlert errors={globalErrors} onClose={clearErrors} />
-        
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".pdf,.png,.jpg,.jpeg,.svg,.csv,.txt"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isUploading}
-              className="h-9 px-4 gap-2 font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="inline">Upload</span>
-            </Button>
-          </DialogTrigger>
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.png,.jpg,.jpeg,.svg,.csv,.txt"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isUploading}
+            className="h-9 px-4 gap-2 font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="inline">Upload</span>
+          </Button>
+        </DialogTrigger>
           
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -280,9 +275,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             </div>
           </DialogContent>
         </Dialog>
-
-      </div>
-    </div>
+        
+        {globalErrors.length > 0 && (
+          <div className="fixed top-4 right-4 z-50">
+            <ErrorAlert errors={globalErrors} onClose={clearErrors} />
+          </div>
+        )}
+    </>
   );
 };
 
