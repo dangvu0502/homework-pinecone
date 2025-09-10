@@ -13,7 +13,7 @@ secrets/
 # data
 data/
 src/uploads/
-
+database.sqlite3
 logs/
 docs/
 screenshots/
