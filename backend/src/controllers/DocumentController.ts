@@ -284,12 +284,24 @@ export class DocumentController {
         return;
       }
 
+      // If document is still processing, return processing status
+      if (document.status === 'processing') {
+        res.json({
+          chunks: [],
+          chunkCount: 0,
+          message: 'Document is still processing...',
+          isProcessing: true
+        });
+        return;
+      }
+
       // If document has no chunks, return empty results
       if (document.status === 'failed' || !document.chunk_count || document.chunk_count === 0) {
         res.json({
           chunks: [],
           chunkCount: 0,
-          message: document.status === 'failed' ? 'Document processing failed.' : 'No chunks available.'
+          message: document.status === 'failed' ? 'Document processing failed.' : 'No chunks available.',
+          isProcessing: false
         });
         return;
       }
@@ -312,14 +324,16 @@ export class DocumentController {
 
         res.json({
           chunks: sortedChunks,
-          chunkCount: sortedChunks.length
+          chunkCount: sortedChunks.length,
+          isProcessing: false
         });
       } catch (error) {
         logger.error('Failed to retrieve chunks', { documentId: id, error });
         res.json({
           chunks: [],
           chunkCount: 0,
-          message: 'Unable to retrieve chunks at this time.'
+          message: 'Unable to retrieve chunks at this time.',
+          isProcessing: false
         });
       }
     } catch (error) {

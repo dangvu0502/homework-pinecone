@@ -18,8 +18,6 @@ const DocumentInsights: React.FC<DocumentInsightsProps> = ({
 
   // Get document list data, summary, and chunks
   const { data: documents, isLoading: documentsLoading } = useDocuments();
-  console.log('documents', documents);
-  console.log('selectedDocumentId', selectedDocumentId);
   const { data: summaryData, isLoading: summaryLoading } =
     useDocumentSummary(selectedDocumentId || null);
   const { data: chunksData, isLoading: chunksLoading } =

@@ -27,7 +27,7 @@ import DocumentUpload from "../upload/DocumentUpload";
 interface DocumentPanelProps {
   documents: Document[];
   selectedIds: number[];
-  processingStatus: Record<number, "processing" | "ready" | "error">;
+  processingStatus: Record<number, "processing" | "ready" | "error" | "pending" | "uploaded" | "processed" | "failed">;
 }
 
 const DocumentPanel: React.FC<DocumentPanelProps> = ({
@@ -49,10 +49,20 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
     > = {
       processing: {
         icon: <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />,
-        label: "Processing document...",
+        label: "Processing document... Please wait",
         bgClass: "bg-blue-50 border-blue-200",
       },
+      pending: {
+        icon: <Loader2 className="w-3 h-3 text-amber-600 animate-pulse" />,
+        label: "Awaiting processing",
+        bgClass: "bg-amber-50 border-amber-200",
+      },
       ready: {
+        icon: <CheckCircle className="w-3 h-3 text-green-600" />,
+        label: "Ready for chat",
+        bgClass: "bg-green-50 border-green-200",
+      },
+      processed: {
         icon: <CheckCircle className="w-3 h-3 text-green-600" />,
         label: "Ready for chat",
         bgClass: "bg-green-50 border-green-200",
@@ -62,8 +72,13 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
         label: "Processing failed",
         bgClass: "bg-red-50 border-red-200",
       },
+      failed: {
+        icon: <AlertCircle className="w-3 h-3 text-red-600" />,
+        label: "Processing failed",
+        bgClass: "bg-red-50 border-red-200",
+      },
       uploaded: {
-        icon: <File className="w-3 h-3 text-amber-600" />,
+        icon: <Loader2 className="w-3 h-3 text-amber-600 animate-pulse" />,
         label: "Awaiting processing",
         bgClass: "bg-amber-50 border-amber-200",
       },
@@ -186,29 +201,29 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
                   const numericId = parseInt(value);
                   const doc = documents.find(d => d.id === numericId);
                   const status = processingStatus[numericId] || doc?.status;
-                  const isProcessing = status === 'processing' || status === 'uploaded';
+                  const isReady = status === 'processed' || status === 'ready';
                   
-                  if (!isProcessing) {
+                  if (isReady) {
                     selectDocument(numericId === selectedDocumentId ? null : numericId);
                   }
                 }}
               >
                 {documents.map((doc) => {
                   const status = processingStatus[doc.id] || doc.status;
-                  const isProcessing = status === 'processing' || status === 'uploaded';
+                  const isReady = status === 'processed' || status === 'ready';
                   
                   return (
                   <Card
                     key={doc.id}
                     className={`transition-all overflow-hidden ${
-                      isProcessing 
-                        ? "opacity-60 cursor-not-allowed" 
+                      !isReady 
+                        ? "opacity-60 cursor-not-allowed bg-muted/50" 
                         : selectedDocumentId === doc.id
                         ? "ring-2 ring-primary bg-primary/10 border-transparent cursor-pointer"
                         : "hover:bg-accent hover:shadow-sm cursor-pointer"
                     }`}
                     onClick={() => {
-                      if (!isProcessing) {
+                      if (isReady) {
                         selectDocument(
                           selectedDocumentId === doc.id ? null : doc.id
                         );
@@ -222,7 +237,7 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
                           value={doc.id.toString()}
                           id={doc.id.toString()}
                           className="w-4 h-4 mt-0.5 flex-shrink-0"
-                          disabled={isProcessing}
+                          disabled={!isReady}
                         />
 
                         <div className="flex-1 min-w-0">

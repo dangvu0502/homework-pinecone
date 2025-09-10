@@ -117,28 +117,17 @@ export const useDocumentChunks = (documentId: number | null) => {
     queryFn: async () => {
       if (!documentId) return null;
       
-      // Check document status first
-      const status = await documentApi.getStatus(documentId);
-      
-      // If document is still processing, return empty result with processing status
-      if (status.status === 'processing') {
-        return {
-          chunks: [],
-          chunkCount: 0,
-          message: 'Document is still processing...',
-          isProcessing: true
-        };
-      }
-      
-      // If document is ready, get chunks
-      return documentApi.getChunks(documentId);
+      // Get chunks directly - the backend will handle the processing status
+      const result = await documentApi.getChunks(documentId);
+      return result;
     },
     enabled: !!documentId,
     staleTime: 0, // Always refetch to avoid stale data
     retry: 2, // Retry failed requests
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // If document is still processing, poll every 3 seconds
-      if (data?.state?.data?.isProcessing) {
+      const data = query.state.data;
+      if (data?.isProcessing) {
         return 3000;
       }
       return false; // Stop polling when done

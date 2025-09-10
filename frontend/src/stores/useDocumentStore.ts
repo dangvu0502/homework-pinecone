@@ -14,7 +14,7 @@ export interface Document {
 
 interface DocumentStore {
   documents: Document[];
-  processingStatus: Record<number, 'processing' | 'ready' | 'error'>;
+  processingStatus: Record<number, 'processing' | 'ready' | 'error' | 'pending' | 'uploaded' | 'processed' | 'failed'>;
   isLoading: boolean;
   error: string | null;
   eventSource: EventSource | null;
