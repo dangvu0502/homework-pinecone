@@ -71,12 +71,12 @@ PINECONE_INDEX_NAME=your_index_name
 
 ### Using Make Commands
 ```bash
+make setup      # Setup dependencies and run migrations
 make dev        # Start both frontend and backend
 make frontend   # Start frontend only
 make backend    # Start backend only
 make lint       # Run linting for both
 make typecheck  # Run type checking for both
-make check      # Run all quality checks
 make help       # Show all available commands
 ```
 
