@@ -22,7 +22,7 @@ export interface ChatSession {
   title: string;
   createdAt: Date;
   updatedAt: Date;
-  documentIds: string[];
+  documentIds: number[];
 }
 
 export interface ChatStore {
@@ -37,16 +37,16 @@ export interface ChatStore {
   error: string | null;
   
   // Actions
-  createSession: (title: string, documentIds: string[]) => Promise<ChatSession>;
+  createSession: (title: string, documentIds: number[]) => Promise<ChatSession>;
   setCurrentSession: (sessionId: string | null) => void;
-  getOrCreateSessionForDocument: (documentId: string) => Promise<ChatSession>;
-  switchToDocumentSession: (documentId: string) => Promise<void>;
+  getOrCreateSessionForDocument: (documentId: number) => Promise<ChatSession>;
+  switchToDocumentSession: (documentId: number) => Promise<void>;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   updateStreamingMessage: (content: string) => void;
   completeStreamingMessage: (sources?: DocumentSource[]) => void;
   setStreaming: (isStreaming: boolean) => void;
   clearMessages: () => void;
-  updateContext: (documentIds: string[]) => void;
+  updateContext: (documentIds: number[]) => void;
   deleteSession: (sessionId: string) => void;
   
   // API Actions
@@ -68,8 +68,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   createSession: async (title, documentIds) => {
     set({ isLoading: true, error: null });
     try {
-      const numericIds = documentIds.map(id => parseInt(id));
-      const response = await chatApi.createSession(numericIds);
+      const response = await chatApi.createSession(documentIds);
       
       const newSession: ChatSession = {
         id: response.id.toString(),
@@ -157,8 +156,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     } else {
       // Create new session for this document
       try {
-        const numericId = parseInt(documentId);
-        const response = await chatApi.createSession([numericId]);
+        const response = await chatApi.createSession([documentId]);
         
         const newSession: ChatSession = {
           id: response.id.toString(),
@@ -377,7 +375,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   loadSessionHistory: async (sessionId) => {
     set({ isLoading: true, error: null });
     try {
-      const history = await chatApi.getSessionHistory(parseInt(sessionId));
+      const history = await chatApi.getSessionHistory(sessionId);
       
       const messages: Message[] = history.messages.map(msg => ({
         id: msg.id.toString(),

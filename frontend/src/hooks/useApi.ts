@@ -11,16 +11,20 @@ export const useUploadDocument = () => {
   
   return useMutation({
     mutationFn: documentApi.upload,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    onSuccess: async (data) => {
+      // Add the document to store immediately
       addDocument({
-        id: data.id.toString(),
+        id: data.id,
         filename: data.filename,
         contentType: 'application/octet-stream',
         size: 0,
         status: 'processing',
         uploadedAt: new Date().toISOString(),
       });
+      
+      // Force refetch of documents
+      await queryClient.invalidateQueries({ queryKey: ['documents'] });
+      await queryClient.refetchQueries({ queryKey: ['documents'] });
     },
   });
 };
@@ -35,8 +39,8 @@ export const useDocuments = () => {
       
       // Store metadata for each document
       documents.forEach(doc => {
-        setMetadata(doc.id.toString(), {
-          id: doc.id.toString(),
+        setMetadata(doc.id, {
+          id: doc.id,
           filename: doc.filename,
           totalChunks: doc.metadata?.totalChunks || 0,
           summary: doc.metadata?.hasSummary ? undefined : null, // Don't overwrite existing summary
@@ -49,6 +53,9 @@ export const useDocuments = () => {
       
       return documents;
     },
+    staleTime: 0, // Consider data stale immediately
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 };
 
@@ -60,21 +67,7 @@ export const useDeleteDocument = () => {
     mutationFn: documentApi.delete,
     onSuccess: (_, documentId) => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      removeDocument(documentId.toString());
-    },
-  });
-};
-
-export const useDocumentStatus = (documentId: number | null) => {
-  return useQuery({
-    queryKey: ['document-status', documentId],
-    queryFn: () => documentId ? documentApi.getStatus(documentId) : null,
-    enabled: !!documentId,
-    refetchInterval: (query) => {
-      if (query.state.data?.status === 'processing') {
-        return 2000; // Poll every 2 seconds while processing
-      }
-      return false; // Stop polling when done
+      removeDocument(documentId);
     },
   });
 };
@@ -95,7 +88,7 @@ export const useDocumentSummary = (documentId: number | null) => {
       if (!documentId) return null;
       
       // Check cache first
-      const cached = getMetadata(documentId.toString());
+      const cached = getMetadata(documentId);
       if (cached?.summary) {
         console.log('Using cached summary for document', documentId);
         return { summary: cached.summary, cached: true };
@@ -106,7 +99,7 @@ export const useDocumentSummary = (documentId: number | null) => {
       
       // Update cache
       if (result.summary) {
-        updateMetadata(documentId.toString(), {
+        updateMetadata(documentId, {
           summary: result.summary,
         });
       }
@@ -206,13 +199,5 @@ export const useSendMessage = () => {
       setStreaming(false);
       updateStreamingMessage('');
     },
-  });
-};
-
-export const useChatHistory = (sessionId: number | null) => {
-  return useQuery({
-    queryKey: ['chat-history', sessionId],
-    queryFn: () => sessionId ? chatApi.getSessionHistory(sessionId) : null,
-    enabled: !!sessionId,
   });
 };

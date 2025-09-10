@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -19,9 +19,16 @@ const Header: React.FC = () => {
   };
 
   const getNextTheme = (): 'light' | 'dark' | 'system' => {
-    const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system'];
-    const currentIndex = themes.indexOf(theme);
-    return themes[(currentIndex + 1) % themes.length];
+    switch (theme) {
+      case 'light':
+        return 'dark';
+      case 'dark':
+        return 'system';
+      case 'system':
+        return 'light';
+      default:
+        return 'light';
+    }
   };
 
   const getThemeLabel = (t: 'light' | 'dark' | 'system') => {

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { documentApi, notificationApi } from '../services/api';
 
 export interface Document {
-  id: string;
+  id: number;
   filename: string;
   contentType: string;
   size: number;
@@ -14,24 +14,24 @@ export interface Document {
 
 interface DocumentStore {
   documents: Document[];
-  processingStatus: Record<string, 'processing' | 'ready' | 'error'>;
+  processingStatus: Record<number, 'processing' | 'ready' | 'error'>;
   isLoading: boolean;
   error: string | null;
   eventSource: EventSource | null;
   
   // Actions
   addDocument: (document: Document) => void;
-  updateDocument: (id: string, updates: Partial<Document>) => void;
-  removeDocument: (id: string) => void;
+  updateDocument: (id: number, updates: Partial<Document>) => void;
+  removeDocument: (id: number) => void;
   setDocuments: (documents: Document[]) => void;
-  updateProcessingStatus: (id: string, status: 'processing' | 'ready' | 'error') => void;
-  getSelectedDocuments: (ids: string[]) => Document[];
+  updateProcessingStatus: (id: number, status: 'processing' | 'ready' | 'error') => void;
+  getSelectedDocuments: (ids: number[]) => Document[];
   
   // API Actions
   uploadDocument: (file: File) => Promise<void>;
   fetchDocuments: () => Promise<void>;
-  deleteDocument: (id: string) => Promise<void>;
-  pollDocumentStatus: (id: string) => Promise<void>;
+  deleteDocument: (id: number) => Promise<void>;
+  pollDocumentStatus: (id: number) => Promise<void>;
   
   // SSE Actions
   initializeSSE: () => void;
@@ -65,7 +65,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     set((state) => ({
       documents: state.documents.filter((doc) => doc.id !== id),
       processingStatus: Object.fromEntries(
-        Object.entries(state.processingStatus).filter(([key]) => key !== id)
+        Object.entries(state.processingStatus).filter(([key]) => Number(key) !== id)
       ),
     })),
     
@@ -102,7 +102,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     try {
       const result = await documentApi.upload(file);
       const newDoc: Document = {
-        id: result.id.toString(),
+        id: result.id,
         filename: result.filename,
         contentType: file.type,
         size: file.size,
@@ -133,7 +133,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     try {
       const docs = await documentApi.list();
       const documents: Document[] = docs.map(doc => ({
-        id: doc.id.toString(),
+        id: doc.id,
         filename: doc.filename,
         contentType: doc.contentType,
         size: doc.size,
@@ -155,11 +155,11 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   deleteDocument: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      await documentApi.delete(parseInt(id));
+      await documentApi.delete(id);
       set((state) => ({
         documents: state.documents.filter(doc => doc.id !== id),
         processingStatus: Object.fromEntries(
-          Object.entries(state.processingStatus).filter(([key]) => key !== id)
+          Object.entries(state.processingStatus).filter(([key]) => Number(key) !== id)
         ),
         isLoading: false,
       }));
@@ -174,7 +174,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     
     const poll = async () => {
       try {
-        const status = await documentApi.getStatus(parseInt(id));
+        const status = await documentApi.getStatus(id);
         
         set((state) => ({
           documents: state.documents.map(doc =>

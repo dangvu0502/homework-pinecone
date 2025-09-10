@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { FileText, BarChart } from "lucide-react";
 import DocumentPanel from "../panels/DocumentPanel";
-import ChatPanel from "../panels/ChatPanel";
+import ChatPanel from "../panels/Chat";
 import DocumentInsights from "../panels/DocumentInsights";
 import Header from "./Header";
 
@@ -16,7 +16,7 @@ const ThreePanelLayout: React.FC = () => {
   useIntegratedState();
 
   const {
-    selectedDocument,
+    selectedDocumentId,
     panelVisibility,
     setMobileView,
   } = useLayoutStore();
@@ -24,13 +24,14 @@ const ThreePanelLayout: React.FC = () => {
   const { documents, processingStatus } = useDocumentStore();
   const { messages } = useChatStore();
   
-  const selectedDocumentObj = documents.find(doc => doc.id === selectedDocument);
-
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  
+  // Get selected document name for mobile header
+  const selectedDocumentName = selectedDocumentId 
+    ? documents.find(doc => doc.id === selectedDocumentId)?.filename 
+    : undefined;
 
-  console.log({
-    ...panelVisibility,
-  });
+  const isMobileOrTablet = windowWidth < 1024;
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,8 +44,6 @@ const ThreePanelLayout: React.FC = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [setMobileView]);
-
-  const isMobileOrTablet = windowWidth < 1024;
   
   if (isMobileOrTablet) {
     return (
@@ -67,17 +66,17 @@ const ThreePanelLayout: React.FC = () => {
               <div className="flex-1 overflow-y-auto">
                 <DocumentPanel
                   documents={documents}
-                  selectedIds={selectedDocument ? [selectedDocument] : []}
+                  selectedIds={selectedDocumentId ? [selectedDocumentId] : []}
                   processingStatus={processingStatus}
                 />
               </div>
             </SheetContent>
           </Sheet>
           
-          {selectedDocumentObj && (
+          {selectedDocumentName && (
             <div className="flex-1 text-center px-2">
               <span className="text-sm text-muted-foreground truncate block">
-                {selectedDocumentObj.filename}
+                {selectedDocumentName}
               </span>
             </div>
           )}
@@ -95,8 +94,7 @@ const ThreePanelLayout: React.FC = () => {
               </SheetHeader>
               <div className="flex-1 overflow-y-auto">
                 <DocumentInsights 
-                  selectedDocument={selectedDocument} 
-                  selectedDocumentName={selectedDocumentObj?.filename}
+                  selectedDocumentId={selectedDocumentId}
                 />
               </div>
             </SheetContent>
@@ -107,8 +105,7 @@ const ThreePanelLayout: React.FC = () => {
         <div className="flex-1 overflow-hidden">
           <ChatPanel
             messages={messages}
-            contextDocuments={documents.filter(doc => selectedDocument === doc.id).map(doc => doc.id)}
-            selectedDocumentName={selectedDocumentObj?.filename}
+            contextDocuments={documents.filter(doc => selectedDocumentId === doc.id).map(doc => doc.id.toString())}
           />
         </div>
       </div>
@@ -124,7 +121,7 @@ const ThreePanelLayout: React.FC = () => {
           <div className="w-80 flex-shrink-0 border-r border-border bg-card overflow-y-auto">
             <DocumentPanel
               documents={documents}
-              selectedIds={selectedDocument ? [selectedDocument] : []}
+              selectedIds={selectedDocumentId ? [selectedDocumentId] : []}
               processingStatus={processingStatus}
             />
           </div>
@@ -133,16 +130,14 @@ const ThreePanelLayout: React.FC = () => {
         <div className="flex-1 min-w-0 flex flex-col bg-background overflow-hidden">
           <ChatPanel
             messages={messages}
-            contextDocuments={selectedDocument ? [selectedDocument] : []}
-            selectedDocumentName={selectedDocumentObj?.filename}
+            contextDocuments={selectedDocumentId ? [selectedDocumentId.toString()] : []}
           />
         </div>
 
         {panelVisibility.insights && (
           <div className="w-96 xl:w-[28rem] flex-shrink-0 border-l border-border bg-card overflow-y-auto">
             <DocumentInsights 
-              selectedDocument={selectedDocument}
-              selectedDocumentName={selectedDocumentObj?.filename}
+              selectedDocumentId={selectedDocumentId}
             />
           </div>
         )}

@@ -8,16 +8,16 @@ interface PanelVisibility {
 }
 
 interface LayoutStore {
-  selectedDocument: string | null;
+  selectedDocumentId: number | null;
   currentChatSession: string | null;
   panelVisibility: PanelVisibility;
   isMobileView: boolean;
   activePanel: 'documents' | 'chat' | 'insights';
   
   // Actions
-  selectDocument: (id: string | null) => void;
+  selectDocument: (id: number | null) => void;
   clearDocumentSelection: () => void;
-  updateChatContext: (documentId: string | null) => void;
+  updateChatContext: (documentId: number | null) => void;
   togglePanel: (panel: keyof PanelVisibility) => void;
   setActivePanel: (panel: 'documents' | 'chat' | 'insights') => void;
   setMobileView: (isMobile: boolean) => void;
@@ -27,7 +27,7 @@ interface LayoutStore {
 export const useLayoutStore = create<LayoutStore>()(
   persist(
     (set) => ({
-      selectedDocument: null,
+      selectedDocumentId: null,
       currentChatSession: null,
       panelVisibility: {
         documents: true,
@@ -38,13 +38,13 @@ export const useLayoutStore = create<LayoutStore>()(
       activePanel: 'chat',
       
       selectDocument: (id) =>
-        set({ selectedDocument: id }),
+        set({ selectedDocumentId: id }),
         
       clearDocumentSelection: () =>
-        set({ selectedDocument: null }),
+        set({ selectedDocumentId: null }),
         
       updateChatContext: (documentId) =>
-        set({ selectedDocument: documentId }),
+        set({ selectedDocumentId: documentId }),
         
       togglePanel: (panel) =>
         set((state) => ({
@@ -66,7 +66,7 @@ export const useLayoutStore = create<LayoutStore>()(
     {
       name: 'layout-storage',
       partialize: (state) => ({
-        selectedDocument: state.selectedDocument,
+        selectedDocumentId: state.selectedDocumentId,
         panelVisibility: state.panelVisibility,
       }),
     }

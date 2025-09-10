@@ -63,8 +63,6 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, onClearSearch }) 
     );
   }
 
-  const averageRelevance = result.results.reduce((sum, item) => sum + item.relevanceScore, 0) / result.results.length;
-
   return (
     <Card>
       <CardHeader className="py-2 px-3">
@@ -108,24 +106,6 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, onClearSearch }) 
               </div>
             </div>
           ))}
-        </div>
-
-        <Separator className="my-3" />
-
-        {/* Summary Statistics */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1">
-              <Target className="h-3 w-3 text-muted-foreground" />
-              <span className="text-muted-foreground">Avg. Relevance:</span>
-              <Badge variant="secondary" className="text-xs h-5 px-1.5">
-                {Math.round(averageRelevance * 100)}%
-              </Badge>
-            </div>
-            <div className="text-muted-foreground">
-              {result.resultCount} result{result.resultCount !== 1 ? 's' : ''}
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>

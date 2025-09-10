@@ -15,13 +15,13 @@ export const useIntegratedState = () => {
   
   // Sync selected document with chat context
   useEffect(() => {
-    if (layout.selectedDocument) {
-      chat.updateContext([layout.selectedDocument]);
+    if (layout.selectedDocumentId) {
+      chat.updateContext([layout.selectedDocumentId]);
     } else {
       chat.updateContext([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout.selectedDocument, chat.updateContext]);
+  }, [layout.selectedDocumentId, chat.updateContext]);
   
   // Update processing status when document status changes
   useEffect(() => {
@@ -39,14 +39,14 @@ export const useIntegratedState = () => {
   
   // Clean up selected document when document is removed
   useEffect(() => {
-    if (layout.selectedDocument) {
+    if (layout.selectedDocumentId) {
       const validDocIds = documents.documents.map(d => d.id);
-      if (!validDocIds.includes(layout.selectedDocument)) {
+      if (!validDocIds.includes(layout.selectedDocumentId)) {
         layout.selectDocument(null);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents.documents, layout.selectedDocument, layout.selectDocument]);
+  }, [documents.documents, layout.selectedDocumentId, layout.selectDocument]);
   
   return {
     layout,

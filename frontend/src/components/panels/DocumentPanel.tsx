@@ -26,15 +26,15 @@ import DocumentUpload from "../upload/DocumentUpload";
 
 interface DocumentPanelProps {
   documents: Document[];
-  selectedIds: string[];
-  processingStatus: Record<string, "processing" | "ready" | "error">;
+  selectedIds: number[];
+  processingStatus: Record<number, "processing" | "ready" | "error">;
 }
 
 const DocumentPanel: React.FC<DocumentPanelProps> = ({
   documents,
   processingStatus,
 }) => {
-  const { selectedDocument, selectDocument } = useLayoutStore();
+  const { selectedDocumentId, selectDocument } = useLayoutStore();
   const { deleteDocument } = useDocumentStore();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
@@ -147,7 +147,7 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
       await deleteDocument(documentToDelete.id);
       
       // If the deleted document was selected, clear the selection
-      if (selectedDocument === documentToDelete.id) {
+      if (selectedDocumentId === documentToDelete.id) {
         selectDocument(null);
       }
     } catch (error) {
@@ -181,32 +181,48 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
           ) : (
             <div className="space-y-2 p-4">
               <RadioGroup
-                value={selectedDocument || ""}
-                onValueChange={(value) =>
-                  selectDocument(value === selectedDocument ? null : value)
-                }
+                value={selectedDocumentId?.toString() || ""}
+                onValueChange={(value) => {
+                  const numericId = parseInt(value);
+                  const doc = documents.find(d => d.id === numericId);
+                  const status = processingStatus[numericId] || doc?.status;
+                  const isProcessing = status === 'processing' || status === 'uploaded';
+                  
+                  if (!isProcessing) {
+                    selectDocument(numericId === selectedDocumentId ? null : numericId);
+                  }
+                }}
               >
-                {documents.map((doc) => (
+                {documents.map((doc) => {
+                  const status = processingStatus[doc.id] || doc.status;
+                  const isProcessing = status === 'processing' || status === 'uploaded';
+                  
+                  return (
                   <Card
                     key={doc.id}
-                    className={`cursor-pointer transition-all overflow-hidden ${
-                      selectedDocument === doc.id
-                        ? "ring-2 ring-primary bg-primary/10 border-transparent"
-                        : "hover:bg-accent hover:shadow-sm"
+                    className={`transition-all overflow-hidden ${
+                      isProcessing 
+                        ? "opacity-60 cursor-not-allowed" 
+                        : selectedDocumentId === doc.id
+                        ? "ring-2 ring-primary bg-primary/10 border-transparent cursor-pointer"
+                        : "hover:bg-accent hover:shadow-sm cursor-pointer"
                     }`}
-                    onClick={() =>
-                      selectDocument(
-                        selectedDocument === doc.id ? null : doc.id
-                      )
-                    }
+                    onClick={() => {
+                      if (!isProcessing) {
+                        selectDocument(
+                          selectedDocumentId === doc.id ? null : doc.id
+                        );
+                      }
+                    }}
                     style={{ maxWidth: "100%" }}
                   >
                     <CardContent className="py-3 px-4">
                       <div className="flex items-start gap-3">
                         <RadioGroupItem
-                          value={doc.id}
-                          id={doc.id}
+                          value={doc.id.toString()}
+                          id={doc.id.toString()}
                           className="w-4 h-4 mt-0.5 flex-shrink-0"
+                          disabled={isProcessing}
                         />
 
                         <div className="flex-1 min-w-0">
@@ -262,7 +278,8 @@ const DocumentPanel: React.FC<DocumentPanelProps> = ({
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </RadioGroup>
             </div>
           )}

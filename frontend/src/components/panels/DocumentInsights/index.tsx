@@ -3,36 +3,33 @@ import {
   useDocuments,
   useDocumentSummary,
   useDocumentChunks,
-} from "../../hooks/useApi";
-import DocumentSummaryCard from "../cards/DocumentSummaryCard";
-import DocumentChunksBrowser from "../cards/DocumentChunksBrowser";
+} from "../../../hooks/useApi";
+import { useDocumentMetadataStore } from "../../../stores/useDocumentMetadataStore";
+import DocumentSummaryCard from "./cards/DocumentSummaryCard";
+import DocumentChunksBrowser from "./cards/DocumentChunksBrowser";
 
 interface DocumentInsightsProps {
-  selectedDocument?: string | null;
-  documentId?: number | null;
-  selectedDocumentName?: string;
+  selectedDocumentId?: number | null;
 }
 
 const DocumentInsights: React.FC<DocumentInsightsProps> = ({
-  selectedDocument,
-  documentId,
-  selectedDocumentName,
+  selectedDocumentId,
 }) => {
-  // Convert selectedDocument string to numeric documentId for API calls
-  const numericDocumentId =
-    documentId || (selectedDocument ? parseInt(selectedDocument) : null);
 
   // Get document list data, summary, and chunks
   const { data: documents, isLoading: documentsLoading } = useDocuments();
+  console.log('documents', documents);
+  console.log('selectedDocumentId', selectedDocumentId);
   const { data: summaryData, isLoading: summaryLoading } =
-    useDocumentSummary(numericDocumentId);
+    useDocumentSummary(selectedDocumentId || null);
   const { data: chunksData, isLoading: chunksLoading } =
-    useDocumentChunks(numericDocumentId);
+    useDocumentChunks(selectedDocumentId || null);
 
-  // Find current document data
-  const currentDocument = documents?.find(
-    (doc) => doc.id === numericDocumentId
-  );
+  // Find current document data  
+  const currentDocument = selectedDocumentId 
+    ? documents?.find((doc) => doc.id === selectedDocumentId)
+    : undefined;
+  
 
   // Extract chunks from the response
   const chunks = chunksData?.chunks || [];
@@ -45,7 +42,7 @@ const DocumentInsights: React.FC<DocumentInsightsProps> = ({
         <h2 className="text-lg font-semibold dark:text-gray-100">Document Insights</h2>
       </div>
 
-      {!selectedDocument || !numericDocumentId ? (
+      {!selectedDocumentId ? (
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center text-gray-500 dark:text-gray-400">
             <div className="mb-4 flex justify-center">
@@ -82,7 +79,7 @@ const DocumentInsights: React.FC<DocumentInsightsProps> = ({
         <div className="flex-1 flex flex-col gap-4 px-6 pb-6 overflow-y-auto">
           {/* Document Summary Card */}
           <DocumentSummaryCard
-            filename={selectedDocumentName || currentDocument?.filename || `Document ${numericDocumentId}`}
+            filename={documentsLoading ? 'Loading...' : currentDocument?.filename || ''}
             summary={summaryData?.summary || undefined}
             isLoading={summaryLoading}
           />

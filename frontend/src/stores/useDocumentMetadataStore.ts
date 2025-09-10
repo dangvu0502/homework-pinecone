@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export interface DocumentMetadata {
-  id: string;
+  id: number;
   filename: string;
   totalChunks: number;
   summary: string | null;
@@ -17,10 +17,10 @@ interface DocumentMetadataStore {
   metadata: Record<string, DocumentMetadata>;
   
   // Actions
-  setMetadata: (documentId: string, data: Partial<DocumentMetadata>) => void;
-  getMetadata: (documentId: string) => DocumentMetadata | undefined;
-  updateMetadata: (documentId: string, data: Partial<DocumentMetadata>) => void;
-  clearMetadata: (documentId: string) => void;
+  setMetadata: (documentId: number, data: Partial<DocumentMetadata>) => void;
+  getMetadata: (documentId: number) => DocumentMetadata | undefined;
+  updateMetadata: (documentId: number, data: Partial<DocumentMetadata>) => void;
+  clearMetadata: (documentId: number) => void;
   clearAllMetadata: () => void;
 }
 

@@ -1,39 +1,45 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { Send, RotateCw, FileText, MessageSquare } from "lucide-react";
-import { useChatStore } from "../../stores/useChatStore";
-import type { Message } from "../../stores/useChatStore";
-import { useLayoutStore } from "../../stores/useLayoutStore";
+import { useChatStore } from "@/stores/useChatStore";
+import type { Message } from "@/stores/useChatStore";
+import { useLayoutStore } from "@/stores/useLayoutStore";
+import { useDocuments } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageBubble } from "../chat/MessageBubble";
-import { StreamingMessage } from "../chat/StreamingMessage";
+import { MessageBubble } from "@/components/panels/Chat/MessageBubble";
+import { StreamingMessage } from "@/components/panels/Chat/StreamingMessage";
 
 interface ChatPanelProps {
   messages: Message[];
   contextDocuments: string[];
-  selectedDocumentName?: string;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
   messages,
   contextDocuments,
-  selectedDocumentName,
 }) => {
   const [input, setInput] = React.useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { selectedDocument } = useLayoutStore();
+  const { selectedDocumentId } = useLayoutStore();
+  const { data: documents } = useDocuments();
   const {
     isStreaming,
     streamingMessage,
     streamingSessionId,
     clearMessages,
-    createSession,
     sendMessage,
     currentSession,
     getOrCreateSessionForDocument,
     switchToDocumentSession,
   } = useChatStore();
+
+  // Get selected document name from documents list
+  const selectedDocumentName = selectedDocumentId 
+    ? documents?.find(doc => doc.id === selectedDocumentId)?.filename 
+    : undefined;
+
+  const hasDocuments = contextDocuments.length > 0;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,6 +76,28 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     textarea.style.height = `${newHeight}px`;
   }, []);
 
+  const handleSendMessage = async () => {
+    if (!input.trim() || isStreaming) return;
+
+    const messageContent = input.trim();
+    setInput("");
+
+    // Create or get session for current document if needed
+    if (!currentSession && selectedDocumentId) {
+      await getOrCreateSessionForDocument(selectedDocumentId);
+    }
+
+    // Use the real sendMessage API from the store
+    await sendMessage(messageContent);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage]);
@@ -89,36 +117,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   // Switch to document's session when selected document changes
   useEffect(() => {
     const switchSession = async () => {
-      if (selectedDocument) {
-        await switchToDocumentSession(selectedDocument);
+      if (selectedDocumentId) {
+        await switchToDocumentSession(selectedDocumentId);
       }
     };
     switchSession();
-  }, [selectedDocument, switchToDocumentSession]);
-
-  const handleSendMessage = async () => {
-    if (!input.trim() || isStreaming) return;
-
-    const messageContent = input.trim();
-    setInput("");
-
-    // Create or get session for current document if needed
-    if (!currentSession && selectedDocument) {
-      await getOrCreateSessionForDocument(selectedDocument);
-    }
-
-    // Use the real sendMessage API from the store
-    await sendMessage(messageContent);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const hasDocuments = contextDocuments.length > 0;
+  }, [selectedDocumentId, switchToDocumentSession]);
 
   return (
     <div className="h-full flex flex-col">

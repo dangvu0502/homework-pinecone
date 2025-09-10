@@ -1,9 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export class ApiError extends Error {
+  public status: number;
 
-  constructor(public status: number, message: string) {
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
     this.name = 'ApiError';
   }
 }
@@ -182,7 +184,7 @@ export const chatApi = {
     }
   },
   
-  async getSessionHistory(sessionId: number): Promise<{
+  async getSessionHistory(sessionId: string): Promise<{
     messages: Array<{
       id: number;
       role: 'user' | 'assistant';

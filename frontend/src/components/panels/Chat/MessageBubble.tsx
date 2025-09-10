@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { Message } from '../../stores/useChatStore';
+import type { Message } from '@/stores/useChatStore';
 
 interface MessageBubbleProps {
   message: Message;
@@ -37,7 +37,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                       <CardContent className="p-2">
                         <div className="text-xs">
                           <span className="font-medium">{source.documentName}</span>
-                          {source.page && <span className="ml-1">(p. {source.page})</span>}
                         </div>
                         {source.snippet && (
                           <div className="mt-1 text-xs italic text-muted-foreground truncate">

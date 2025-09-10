@@ -1,5 +1,5 @@
 import React from 'react';
-import type { UploadedDocument } from '../../types';
+import type { UploadedDocument } from '@/types';
 
 interface DocumentSelectorProps {
   documents: UploadedDocument[];

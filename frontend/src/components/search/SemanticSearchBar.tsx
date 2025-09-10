@@ -2,20 +2,17 @@ import React, { useState } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SemanticSearchBarProps {
   onSearch: (query: string) => void;
   isLoading?: boolean;
-  selectedDocument?: string | null;
-  suggestedQuestions?: string[];
+  selectedDocumentId?: string | null;
 }
 
 const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({
   onSearch,
   isLoading = false,
-  selectedDocument,
-  suggestedQuestions = []
+  selectedDocumentId,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -24,11 +21,6 @@ const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({
     if (query.trim() && !isLoading) {
       onSearch(query.trim());
     }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setQuery(suggestion);
-    onSearch(suggestion);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,14 +32,14 @@ const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({
       <Input
         value={query}
         onChange={handleInputChange}
-        placeholder={selectedDocument ? "Find specific data or insights..." : "Select a document to search"}
-        disabled={!selectedDocument || isLoading}
+        placeholder={selectedDocumentId ? "Find specific data or insights..." : "Select a document to search"}
+        disabled={!selectedDocumentId || isLoading}
         className="flex-1"
       />
       <Button
         type="submit"
         size="default"
-        disabled={!selectedDocument || !query.trim() || isLoading}
+        disabled={!selectedDocumentId || !query.trim() || isLoading}
         className="px-4"
       >
         {isLoading ? (

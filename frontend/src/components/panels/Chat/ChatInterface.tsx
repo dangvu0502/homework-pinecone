@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { StreamingMessage } from './StreamingMessage';
 import { DocumentSelector } from './DocumentSelector';
-import { useChatStream } from '../../hooks/useChatStream';
-import type { UploadedDocument } from '../../types';
+import { useChatStream } from '../../../hooks/useChatStream';
+import type { UploadedDocument } from '../../../types';
 
 interface ChatInterfaceProps {
   documents: UploadedDocument[];
@@ -23,19 +23,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documents }) => {
     error,
     sendMessage,
     stopStreaming,
-    clearMessages,
   } = useChatStream(sessionId);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingMessage]);
-
-  useEffect(() => {
-    const readyDocs = documents.filter(doc => doc.status === 'ready');
-    if (readyDocs.length > 0 && selectedDocuments.length === 0) {
-      setSelectedDocuments(readyDocs.map(doc => doc.id));
-    }
-  }, [documents, selectedDocuments.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,26 +47,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documents }) => {
     }
   };
 
-  const handleClearChat = () => {
-    if (window.confirm('Are you sure you want to clear the chat history?')) {
-      clearMessages();
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, streamingMessage]);
+
+  useEffect(() => {
+    const readyDocs = documents.filter(doc => doc.status === 'ready');
+    if (readyDocs.length > 0 && selectedDocuments.length === 0) {
+      setSelectedDocuments(readyDocs.map(doc => doc.id));
     }
-  };
+  }, [documents, selectedDocuments.length]);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
       <div className="flex-none p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Chat Assistant
+            Chat
           </h2>
-          <button
-            onClick={handleClearChat}
-            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          >
-            Clear Chat
-          </button>
-        </div>
+
         
         <DocumentSelector
           documents={documents}
