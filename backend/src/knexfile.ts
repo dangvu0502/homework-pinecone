@@ -1,12 +1,17 @@
 import type { Knex } from "knex";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Update with your config settings.
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const config: { [key: string]: Knex.Config } = {
   development: {
     client: "sqlite3",
     connection: {
-      filename: "/Users/matt/Learn/fun_stuff/rag-challenge/backend/database.sqlite3"
+      filename: path.resolve(__dirname, "../database.sqlite3")
     },
     useNullAsDefault: true,
     migrations: {

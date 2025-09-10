@@ -3,7 +3,7 @@
 Document processing and retrieval API with vector search capabilities.
 
 ## Tech Stack
-- **Node.js** + **TypeScript** + **Express**
+- **Node.js** + **TypeScript** + **Express** (node 23.6 +)
 - **SQLite** + **Knex** (database & migrations)
 - **Pinecone** (vector database)
 - **OpenAI** (embeddings & chat)
@@ -40,33 +40,13 @@ npm run migrate:make <name> # Create migration
 - `GET /api/documents/:id/chunks` - Get document chunks
 - `DELETE /api/documents/:id` - Delete document
 
-### Chat
-- `POST /api/chat` - Chat with documents (RAG)
-- `GET /api/chat/history` - Get chat history
-
-### Search
-- `POST /api/search` - Search documents by query
-
 ### SSE
 - `GET /api/sse/status` - Real-time document processing status
 
 ## Environment Variables
 ```env
-PORT=3001
-DATABASE_URL=./database.sqlite3
+PORT=3000
 OPENAI_API_KEY=your_key
 PINECONE_API_KEY=your_key
 PINECONE_INDEX_NAME=your_index
-```
-
-## Project Structure
-```
-src/
-├── controllers/    # Request handlers
-├── services/       # Business logic (OpenAI, Pinecone)
-├── models/         # Database models
-├── routes/         # API routes
-├── middleware/     # Auth, error handling
-├── migrations/     # Database migrations
-└── uploads/        # File storage
 ```

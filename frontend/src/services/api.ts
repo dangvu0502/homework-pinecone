@@ -12,8 +12,19 @@ export class ApiError extends Error {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }));
-    throw new ApiError(response.status, error.error || 'Request failed');
+    const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+    
+    // Handle different error formats from backend
+    let errorMessage = 'Request failed';
+    if (typeof errorData.error === 'string') {
+      errorMessage = errorData.error;
+    } else if (typeof errorData.error === 'object' && errorData.error?.message) {
+      errorMessage = errorData.error.message;
+    } else if (errorData.message) {
+      errorMessage = errorData.message;
+    }
+    
+    throw new ApiError(response.status, errorMessage);
   }
   
   // Handle empty responses

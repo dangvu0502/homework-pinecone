@@ -1,9 +1,9 @@
-# RAG Challenge - Frontend
+# Code Challenge - Frontend
 
 Modern document management interface with AI-powered search and chat.
 
 ## Tech Stack
-- **React 19** + **TypeScript** + **Vite**
+- **React** + **TypeScript** + **Vite**
 - **TanStack Query** (data fetching)
 - **Zustand** (state management)
 - **Tailwind CSS** + **Radix UI** (styling)
@@ -39,32 +39,15 @@ npm run lint      # Linting
 
 ### AI Chat Interface
 - Chat with uploaded documents
-- Context-aware responses (RAG)
-- Chat history
 - Real-time streaming responses
 
-### Search
-- Semantic search across documents
-- View relevant chunks
-- Filter by document
-
-## Project Structure
-```
-src/
-├── components/
-│   ├── cards/         # Document cards, summary, chunks
-│   ├── chat/          # Chat interface components
-│   ├── layout/        # Layout components
-│   ├── panels/        # Main panels (upload, insights)
-│   └── ui/            # Reusable UI components
-├── hooks/             # Custom React hooks
-├── services/          # API client
-├── stores/            # Zustand stores
-└── types/             # TypeScript types
+### Document Insights
+- Document summary
+- List of document chunks
 ```
 
 ## Environment
-API endpoint configured in `services/api.ts` (default: `http://localhost:3001`)
+API endpoint configured in `services/api.ts` (default: `http://localhost:3000`)
 
 ## UI Components
 - **ThreePanelLayout**: Main application layout

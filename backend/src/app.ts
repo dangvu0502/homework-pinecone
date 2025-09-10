@@ -23,8 +23,8 @@ app.use(cors({
 }));
 
 // Body parsing
-app.use(express.json({ limit: '50mb' })); // Higher limit for file uploads
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '10mb' })); // Higher limit for file uploads
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging
 app.use((req, _res, next) => {
@@ -42,13 +42,13 @@ app.get('/health', (_req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    service: 'rag-challenge-backend'
+    service: 'code-challenge-backend'
   });
 });
 
 // API routes
 app.get('/api', (_req, res) => {
-  res.json({ message: 'RAG Challenge API v1.0', status: 'ready' });
+  res.json({ message: 'Code Challenge API v1.0', status: 'ready' });
 });
 
 // Register route handlers
