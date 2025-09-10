@@ -95,6 +95,7 @@ export const documentApi = {
     }>;
     chunkCount: number;
     message?: string;
+    isProcessing?: boolean;
   }> {
     const response = await fetch(`${API_BASE_URL}/documents/${documentId}/chunks`);
     return handleResponse(response);

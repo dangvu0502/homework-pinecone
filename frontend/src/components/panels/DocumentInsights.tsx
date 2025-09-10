@@ -36,6 +36,8 @@ const DocumentInsights: React.FC<DocumentInsightsProps> = ({
 
   // Extract chunks from the response
   const chunks = chunksData?.chunks || [];
+  const isProcessing = chunksData?.isProcessing || false;
+  const chunksMessage = chunksData?.message;
 
   return (
     <div className="h-full flex flex-col">
@@ -86,7 +88,12 @@ const DocumentInsights: React.FC<DocumentInsightsProps> = ({
           />
 
           {/* Document Chunks Browser */}
-          <DocumentChunksBrowser chunks={chunks} isLoading={chunksLoading} />
+          <DocumentChunksBrowser 
+            chunks={chunks} 
+            isLoading={chunksLoading} 
+            isProcessing={isProcessing}
+            message={chunksMessage}
+          />
         </div>
       )}
     </div>

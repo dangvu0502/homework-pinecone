@@ -121,8 +121,35 @@ export const useDocumentSummary = (documentId: number | null) => {
 export const useDocumentChunks = (documentId: number | null) => {
   return useQuery({
     queryKey: ['document-chunks', documentId],
-    queryFn: () => documentId ? documentApi.getChunks(documentId) : null,
+    queryFn: async () => {
+      if (!documentId) return null;
+      
+      // Check document status first
+      const status = await documentApi.getStatus(documentId);
+      
+      // If document is still processing, return empty result with processing status
+      if (status.status === 'processing') {
+        return {
+          chunks: [],
+          chunkCount: 0,
+          message: 'Document is still processing...',
+          isProcessing: true
+        };
+      }
+      
+      // If document is ready, get chunks
+      return documentApi.getChunks(documentId);
+    },
     enabled: !!documentId,
+    staleTime: 0, // Always refetch to avoid stale data
+    retry: 2, // Retry failed requests
+    refetchInterval: (data) => {
+      // If document is still processing, poll every 3 seconds
+      if (data?.state?.data?.isProcessing) {
+        return 3000;
+      }
+      return false; // Stop polling when done
+    },
   });
 };
 

@@ -21,11 +21,15 @@ interface ChunkItem {
 interface DocumentChunksBrowserProps {
   chunks: ChunkItem[];
   isLoading?: boolean;
+  isProcessing?: boolean;
+  message?: string;
 }
 
 const DocumentChunksBrowser: React.FC<DocumentChunksBrowserProps> = ({
   chunks = [],
-  isLoading = false
+  isLoading = false,
+  isProcessing = false,
+  message
 }) => {
   const [filter, setFilter] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -49,7 +53,7 @@ const DocumentChunksBrowser: React.FC<DocumentChunksBrowserProps> = ({
     setFilter('');
   };
 
-  if (isLoading) {
+  if (isLoading || isProcessing) {
     return (
       <Card>
         <CardHeader>
@@ -69,6 +73,11 @@ const DocumentChunksBrowser: React.FC<DocumentChunksBrowserProps> = ({
                 <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
               ))}
             </div>
+            {isProcessing && message && (
+              <div className="text-center text-sm text-muted-foreground">
+                {message}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

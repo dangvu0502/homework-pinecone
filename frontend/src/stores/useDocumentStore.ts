@@ -47,7 +47,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   
   addDocument: (document) =>
     set((state) => ({
-      documents: [...state.documents, document],
+      documents: [document, ...state.documents],
       processingStatus: {
         ...state.processingStatus,
         [document.id]: document.status === 'uploaded' ? 'processing' : 'ready',
@@ -111,7 +111,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       };
       
       set((state) => ({
-        documents: [...state.documents, newDoc],
+        documents: [newDoc, ...state.documents],
         processingStatus: {
           ...state.processingStatus,
           [newDoc.id]: 'processing',
@@ -139,7 +139,8 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         size: doc.size,
         status: doc.status as Document['status'],
         uploadedAt: doc.uploadedAt,
-      }));
+      }))
+      .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
       set({ documents, isLoading: false });
       
       // Initialize SSE if not already connected
