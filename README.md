@@ -67,32 +67,6 @@ PINECONE_API_KEY=your_pinecone_key
 PINECONE_INDEX_NAME=your_index_name
 ```
 
-## API Endpoints
-
-- `POST /api/documents/upload` - Upload document
-- `GET /api/documents` - List documents
-- `GET /api/documents/:id` - Get document
-- `GET /api/documents/:id/chunks` - Get chunks
-- `POST /api/chat` - Chat with documents
-- `POST /api/search` - Search documents
-
-## Project Structure
-```
-rag-challenge/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/   # Request handlers
-│   │   ├── services/      # OpenAI, Pinecone
-│   │   ├── models/        # Database models
-│   │   └── routes/        # API routes
-│   └── database.sqlite3
-├── frontend/
-│   └── src/
-│       ├── components/    # UI components
-│       ├── services/      # API client
-│       └── stores/        # State management
-```
-
 ## Development
 
 ### Using Make Commands
